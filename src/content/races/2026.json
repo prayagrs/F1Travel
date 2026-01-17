@@ -1,0 +1,216 @@
+[
+  {
+    "id": "australian-gp",
+    "name": "Australian Grand Prix",
+    "circuit": "Albert Park Circuit",
+    "city": "Melbourne",
+    "country": "Australia",
+    "raceDateISO": "2026-03-08",
+    "officialTicketsUrl": "https://www.grandprix.com.au/tickets"
+  },
+  {
+    "id": "chinese-gp",
+    "name": "Chinese Grand Prix",
+    "circuit": "Shanghai International Circuit",
+    "city": "Shanghai",
+    "country": "China",
+    "raceDateISO": "2026-03-15"
+  },
+  {
+    "id": "japanese-gp",
+    "name": "Japanese Grand Prix",
+    "circuit": "Suzuka Circuit",
+    "city": "Suzuka",
+    "country": "Japan",
+    "raceDateISO": "2026-03-29",
+    "officialTicketsUrl": "https://www.suzukacircuit.jp/en/tickets"
+  },
+  {
+    "id": "bahrain-gp",
+    "name": "Bahrain Grand Prix",
+    "circuit": "Bahrain International Circuit",
+    "city": "Sakhir",
+    "country": "Bahrain",
+    "raceDateISO": "2026-04-12",
+    "officialTicketsUrl": "https://www.bahraingp.com/tickets"
+  },
+  {
+    "id": "saudi-arabian-gp",
+    "name": "Saudi Arabian Grand Prix",
+    "circuit": "Jeddah Corniche Circuit",
+    "city": "Jeddah",
+    "country": "Saudi Arabia",
+    "raceDateISO": "2026-04-19",
+    "officialTicketsUrl": "https://www.saudiarabiangp.com/tickets"
+  },
+  {
+    "id": "miami-gp",
+    "name": "Miami Grand Prix",
+    "circuit": "Miami International Autodrome",
+    "city": "Miami",
+    "country": "United States",
+    "raceDateISO": "2026-05-03",
+    "officialTicketsUrl": "https://www.f1miamigp.com/tickets"
+  },
+  {
+    "id": "canadian-gp",
+    "name": "Canadian Grand Prix",
+    "circuit": "Circuit Gilles Villeneuve",
+    "city": "Montreal",
+    "country": "Canada",
+    "raceDateISO": "2026-05-24",
+    "officialTicketsUrl": "https://www.grandprixcanada.ca/tickets"
+  },
+  {
+    "id": "monaco-gp",
+    "name": "Monaco Grand Prix",
+    "circuit": "Circuit de Monaco",
+    "city": "Monte Carlo",
+    "country": "Monaco",
+    "raceDateISO": "2026-06-07",
+    "officialTicketsUrl": "https://www.acm.mc/en/grand-prix-f1/tickets"
+  },
+  {
+    "id": "spanish-gp",
+    "name": "Spanish Grand Prix",
+    "circuit": "Circuit de Barcelona-Catalunya",
+    "city": "Barcelona",
+    "country": "Spain",
+    "raceDateISO": "2026-06-14",
+    "officialTicketsUrl": "https://www.circuitcat.com/en/tickets"
+  },
+  {
+    "id": "austrian-gp",
+    "name": "Austrian Grand Prix",
+    "circuit": "Red Bull Ring",
+    "city": "Spielberg",
+    "country": "Austria",
+    "raceDateISO": "2026-06-28",
+    "officialTicketsUrl": "https://www.projekt-spielberg.com/en/tickets"
+  },
+  {
+    "id": "british-gp",
+    "name": "British Grand Prix",
+    "circuit": "Silverstone Circuit",
+    "city": "Silverstone",
+    "country": "United Kingdom",
+    "raceDateISO": "2026-07-05",
+    "officialTicketsUrl": "https://www.silverstone.co.uk/events/formula-1"
+  },
+  {
+    "id": "belgian-gp",
+    "name": "Belgian Grand Prix",
+    "circuit": "Circuit de Spa-Francorchamps",
+    "city": "Spa",
+    "country": "Belgium",
+    "raceDateISO": "2026-07-19",
+    "officialTicketsUrl": "https://www.spagrandprix.com/en/tickets"
+  },
+  {
+    "id": "hungarian-gp",
+    "name": "Hungarian Grand Prix",
+    "circuit": "Hungaroring",
+    "city": "Budapest",
+    "country": "Hungary",
+    "raceDateISO": "2026-07-26",
+    "officialTicketsUrl": "https://www.hungaroring.hu/en/tickets"
+  },
+  {
+    "id": "dutch-gp",
+    "name": "Dutch Grand Prix",
+    "circuit": "Circuit Zandvoort",
+    "city": "Zandvoort",
+    "country": "Netherlands",
+    "raceDateISO": "2026-08-23",
+    "officialTicketsUrl": "https://www.dutchgp.nl/en/tickets"
+  },
+  {
+    "id": "italian-gp",
+    "name": "Italian Grand Prix",
+    "circuit": "Autodromo Nazionale Monza",
+    "city": "Monza",
+    "country": "Italy",
+    "raceDateISO": "2026-09-06",
+    "officialTicketsUrl": "https://www.monzanet.it/en/tickets"
+  },
+  {
+    "id": "madrid-gp",
+    "name": "Madrid Grand Prix",
+    "circuit": "Circuito de Madrid",
+    "city": "Madrid",
+    "country": "Spain",
+    "raceDateISO": "2026-09-13"
+  },
+  {
+    "id": "azerbaijan-gp",
+    "name": "Azerbaijan Grand Prix",
+    "circuit": "Baku City Circuit",
+    "city": "Baku",
+    "country": "Azerbaijan",
+    "raceDateISO": "2026-09-27",
+    "officialTicketsUrl": "https://www.bakucitycircuit.com/en/tickets"
+  },
+  {
+    "id": "singapore-gp",
+    "name": "Singapore Grand Prix",
+    "circuit": "Marina Bay Street Circuit",
+    "city": "Singapore",
+    "country": "Singapore",
+    "raceDateISO": "2026-10-11",
+    "officialTicketsUrl": "https://www.singaporegp.sg/tickets"
+  },
+  {
+    "id": "united-states-gp",
+    "name": "United States Grand Prix",
+    "circuit": "Circuit of the Americas",
+    "city": "Austin",
+    "country": "United States",
+    "raceDateISO": "2026-10-25",
+    "officialTicketsUrl": "https://www.circuitoftheamericas.com/f1"
+  },
+  {
+    "id": "mexican-gp",
+    "name": "Mexican Grand Prix",
+    "circuit": "Autódromo Hermanos Rodríguez",
+    "city": "Mexico City",
+    "country": "Mexico",
+    "raceDateISO": "2026-11-01",
+    "officialTicketsUrl": "https://www.gpemexico.com/tickets"
+  },
+  {
+    "id": "brazilian-gp",
+    "name": "Brazilian Grand Prix",
+    "circuit": "Autódromo José Carlos Pace",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "raceDateISO": "2026-11-08",
+    "officialTicketsUrl": "https://www.gpbrasil.com.br/tickets"
+  },
+  {
+    "id": "las-vegas-gp",
+    "name": "Las Vegas Grand Prix",
+    "circuit": "Las Vegas Strip Circuit",
+    "city": "Las Vegas",
+    "country": "United States",
+    "raceDateISO": "2026-11-22",
+    "officialTicketsUrl": "https://www.f1lasvegasgp.com/tickets"
+  },
+  {
+    "id": "qatar-gp",
+    "name": "Qatar Grand Prix",
+    "circuit": "Lusail International Circuit",
+    "city": "Lusail",
+    "country": "Qatar",
+    "raceDateISO": "2026-11-29",
+    "officialTicketsUrl": "https://www.qatarairways.com/en/f1-qatar"
+  },
+  {
+    "id": "abu-dhabi-gp",
+    "name": "Abu Dhabi Grand Prix",
+    "circuit": "Yas Marina Circuit",
+    "city": "Abu Dhabi",
+    "country": "United Arab Emirates",
+    "raceDateISO": "2026-12-06",
+    "officialTicketsUrl": "https://www.yasmarinacircuit.com/en/formula-1"
+  }
+]
