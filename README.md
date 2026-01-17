@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# F1 Travel - F1 Race Weekend Trip Planner
+
+A Next.js application for planning Formula 1 race weekend trips. Generate personalized itineraries with flight, hotel, ticket, and experience recommendations.
+
+## Features
+
+- 🔐 **Google OAuth Authentication** - Sign in with Google
+- 🏎️ **2026 F1 Race Calendar** - Full season calendar with all races
+- ✈️ **Trip Itinerary Generation** - Create personalized trip plans
+- 💰 **Budget Tiers** - Choose from $, $$, or $$$ options
+- 🔗 **Deep Links** - Direct links to flights, hotels, tickets, and experiences
+- 💾 **Save Itineraries** - All trips saved to your account
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS
+- **Database:** PostgreSQL with Prisma ORM
+- **Authentication:** NextAuth.js with Google Provider
+- **Validation:** Zod
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 20.9.0 or higher
+- PostgreSQL database
+- Google OAuth credentials
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <your-repo-url>
+cd f1travel
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+Create a `.env` file with:
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/f1travel"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-here"
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Set up the database:
+```bash
+npx prisma migrate dev
+npx prisma generate
+```
 
-## Learn More
+5. Run the development server:
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/              # Next.js App Router pages and API routes
+├── domain/           # Pure business logic (types, validators, builders)
+├── server/           # Server-side code (auth, db, repos, services)
+├── ui/               # React components (presentational)
+├── content/          # Static data (race calendar)
+└── lib/              # Utilities and helpers
+```
 
-## Deploy on Vercel
+## Architecture
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Domain Layer:** Pure TypeScript types and functions (no dependencies)
+- **Server Layer:** Database access, repositories, and business services
+- **API Layer:** Thin route handlers that delegate to services
+- **UI Layer:** Presentational React components
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+MIT

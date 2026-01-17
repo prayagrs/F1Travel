@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# prisma
+*.db
+*.db-journal
+
+# debug/test scripts
+test-*.ts
+verify-*.js
+view-*.js
+DEBUG_*.md
+QUICK_*.md
