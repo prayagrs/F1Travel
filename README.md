@@ -14,7 +14,7 @@ A Next.js application for planning Formula 1 race weekend trips. Generate person
 ## Tech Stack
 
 - **Framework:** Next.js 16 (App Router)
-- **Language:** TypeScript
+- **Language:** React + TypeScript
 - **Styling:** Tailwind CSS
 - **Database:** PostgreSQL with Prisma ORM
 - **Authentication:** NextAuth.js with Google Provider
