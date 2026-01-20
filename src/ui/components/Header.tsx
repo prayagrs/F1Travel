@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { Spinner } from "./Spinner";
 
 /**
  * Header component with navigation (Home, Trip, Account, Sign in/out).
@@ -78,7 +79,10 @@ export function Header() {
         </div>
         <div className="flex items-center">
           {status === "loading" ? (
-            <span className="text-sm text-gray-400">Loading...</span>
+            <div className="flex items-center gap-2">
+              <Spinner size="sm" />
+              <span className="sr-only">Loading authentication status</span>
+            </div>
           ) : session ? (
             <div className="flex items-center gap-4">
               <span className="hidden text-sm text-gray-400 sm:inline">

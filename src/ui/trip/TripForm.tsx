@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import type { TripRequest, BudgetTier } from "@/domain/itinerary/types";
 import type { RaceWeekend } from "@/domain/races/types";
 import { Card } from "@/ui/components/Card";
+import { Skeleton, SkeletonInput, SkeletonSelect, SkeletonButton } from "@/ui/components/Skeleton";
+import { Spinner } from "@/ui/components/Spinner";
 
 type TripFormProps = {
   onSubmit?: (request: TripRequest) => Promise<void>;
@@ -84,14 +86,32 @@ export function TripForm({ onSubmit }: TripFormProps) {
   if (fetchingRaces) {
     return (
       <Card>
-        <p className="text-gray-600 dark:text-gray-400">Loading races...</p>
+        <div className="space-y-6">
+          <div>
+            <Skeleton className="mb-2 h-4 w-24" />
+            <SkeletonInput />
+          </div>
+          <div>
+            <Skeleton className="mb-2 h-4 w-32" />
+            <SkeletonSelect />
+          </div>
+          <div>
+            <Skeleton className="mb-2 h-4 w-28" />
+            <SkeletonInput />
+          </div>
+          <div>
+            <Skeleton className="mb-2 h-4 w-24" />
+            <SkeletonSelect />
+          </div>
+          <SkeletonButton />
+        </div>
       </Card>
     );
   }
 
   return (
     <Card>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
         <div>
           <label
             htmlFor="originCity"
@@ -108,7 +128,8 @@ export function TripForm({ onSubmit }: TripFormProps) {
             onChange={(e) =>
               setFormData({ ...formData, originCity: e.target.value })
             }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            disabled={loading}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             placeholder="e.g., London"
           />
         </div>
@@ -127,7 +148,8 @@ export function TripForm({ onSubmit }: TripFormProps) {
             onChange={(e) =>
               setFormData({ ...formData, raceId: e.target.value })
             }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            disabled={loading}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           >
             <option value="">Select a race...</option>
             {races.map((race) => (
@@ -158,7 +180,8 @@ export function TripForm({ onSubmit }: TripFormProps) {
                 durationDays: parseInt(e.target.value) || 5,
               })
             }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            disabled={loading}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           />
         </div>
 
@@ -179,7 +202,8 @@ export function TripForm({ onSubmit }: TripFormProps) {
                 budgetTier: e.target.value as BudgetTier,
               })
             }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            disabled={loading}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           >
             <option value="$">$ - Budget</option>
             <option value="$$">$$ - Mid-range</option>
@@ -196,9 +220,10 @@ export function TripForm({ onSubmit }: TripFormProps) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
         >
-          {loading ? "Generating..." : "Generate Itinerary"}
+          {loading && <Spinner size="sm" className="text-white" />}
+          <span>{loading ? "Generating itinerary..." : "Generate Itinerary"}</span>
         </button>
 
         <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">

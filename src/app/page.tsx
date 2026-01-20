@@ -5,29 +5,42 @@ import { Card } from "@/ui/components/Card";
  * Public home page with CTA to /trip
  */
 export default function Home() {
+  // Social proof - Update with real numbers after alpha testing
+  // TODO: Replace with actual user count from database/analytics
+  const socialProofText = "F1 fans"; // Future: "500+ F1 fans" or dynamic count
+
   return (
     <div className="w-full">
+      {/* Skip to main content link for keyboard navigation */}
+      <a
+        href="#main-content"
+        className="sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:w-auto focus:h-auto focus:overflow-visible focus:clip-auto focus:whitespace-normal focus:rounded-md focus:bg-red-600 focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+      >
+        Skip to main content
+      </a>
+      
       {/* Hero Section - Full width with integrated background */}
       <div className="relative w-full overflow-hidden bg-[#0B0C0E] pt-20 sm:pt-24 lg:pt-28">
-        {/* Subtle diagonal gradient sweep */}
+        {/* Subtle diagonal gradient sweep - Decorative only */}
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="pointer-events-none absolute inset-0 opacity-[0.03]"
           style={{
             background:
               "linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, transparent 50%, rgba(107, 114, 128, 0.05) 100%)",
           }}
+          aria-hidden="true"
         />
         
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
-          <div className="grid gap-8 lg:grid-cols-2 lg:items-center lg:gap-12">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+          <div className="grid gap-6 sm:gap-8 lg:grid-cols-2 lg:items-center lg:gap-12">
             {/* Left Column: Content */}
-            <div className="text-center lg:text-left">
+            <div className="relative z-10 order-1 text-center lg:order-none lg:text-left">
               {/* Badge */}
               <div className="mb-3 inline-flex items-center gap-2 border-l-2 border-red-600 pl-3">
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-300">
                   2026 CALENDAR
                 </span>
-                <div className="h-1.5 w-1.5 rounded-full bg-red-600" />
+                <div className="h-1.5 w-1.5 rounded-full bg-red-600" aria-hidden="true" />
               </div>
               
               {/* Headline */}
@@ -42,55 +55,60 @@ export default function Home() {
                 <p className="text-lg font-medium leading-relaxed text-white sm:text-xl">
                   Stop juggling 10 tabs. Get your complete race weekend itinerary in seconds.
                 </p>
-                <p className="text-base leading-relaxed text-gray-400 sm:text-lg">
+                <p className="text-base leading-relaxed text-gray-300 sm:text-lg">
                   Personalized flights, stays, tickets, and local experiences—all curated around the 2026 F1 calendar.
                 </p>
               </div>
               
               {/* CTA */}
-              <div className="mt-8 space-y-2">
+              <div className="mt-8 space-y-3">
                 <Link
                   href="/trip"
-                  className="inline-flex items-center gap-2 rounded-md bg-red-600 px-6 py-3 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:translate-x-1 hover:brightness-110 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-red-600 px-6 py-3 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:translate-x-1 hover:brightness-110 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 focus-visible:ring-2 focus-visible:ring-red-500"
+                  aria-label="Plan your F1 race weekend trip"
                 >
                   Plan Your Trip
-                  <span className="text-lg">→</span>
+                  <span className="text-lg" aria-hidden="true">→</span>
                 </Link>
-                <p className="text-xs text-gray-500 sm:text-sm">
+                <p className="text-xs text-gray-400 sm:text-sm">
                   Takes 30 seconds • No sign-up required to explore
+                </p>
+                {/* Social Proof */}
+                <p className="text-xs text-gray-400 sm:text-sm">
+                  Join <span className="font-medium text-gray-300">{socialProofText}</span> planning their 2026 weekends
                 </p>
               </div>
             </div>
             
-            {/* Right Column: Preview Strip */}
-            <div className="relative hidden lg:block">
-              <div className="rounded-lg border border-gray-800/50 bg-gray-900/30 p-6 backdrop-blur-sm">
+            {/* Right Column: Preview Strip - Visible on all screen sizes */}
+            <div className="relative order-2 lg:order-none" role="complementary" aria-label="Sample itinerary preview">
+              <div className="rounded-lg border border-gray-800/50 bg-gray-900/30 p-4 sm:p-5 lg:p-6 backdrop-blur-sm">
                 {/* Sample output label */}
-                <div className="mb-4">
-                  <span className="text-xs font-medium uppercase tracking-wider text-gray-500">
+                <div className="mb-3 sm:mb-4">
+                  <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-gray-400">
                     Sample Output
                   </span>
                 </div>
                 
                 {/* Race name */}
-                <div className="mb-4">
-                  <h3 className="text-sm font-semibold text-white">Monaco Grand Prix</h3>
-                  <p className="text-xs text-gray-500">Jun 7, 2026 • Monte Carlo</p>
+                <div className="mb-3 sm:mb-4">
+                  <h3 className="text-xs sm:text-sm font-semibold text-white">Monaco Grand Prix</h3>
+                  <p className="text-[10px] sm:text-xs text-gray-400">Jun 7, 2026 • Monte Carlo</p>
                 </div>
                 
                 {/* Date option pills */}
-                <div className="mb-5 flex gap-2">
-                  <div className="animate-subtle-pulse rounded-sm border border-red-600/30 bg-red-600/10 px-3 py-1.5 text-xs font-medium text-red-400 shadow-sm shadow-red-600/20">
+                <div className="mb-4 sm:mb-5 flex gap-1.5 sm:gap-2">
+                  <div className="animate-subtle-pulse rounded-sm border border-red-600/30 bg-red-600/10 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-red-400 shadow-sm shadow-red-600/20">
                     <span className="block">A</span>
-                    <span className="text-[10px] text-red-500/70">Jun 3-9</span>
+                    <span className="text-[9px] sm:text-[10px] text-red-500/70">Jun 3-9</span>
                   </div>
-                  <div className="rounded-sm border border-gray-700 bg-gray-800/50 px-3 py-1.5 text-xs font-medium text-gray-500">
+                  <div className="rounded-sm border border-gray-700 bg-gray-800/50 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-500">
                     <span className="block">B</span>
-                    <span className="text-[10px] text-gray-600">Jun 4-10</span>
+                    <span className="text-[9px] sm:text-[10px] text-gray-600">Jun 4-10</span>
                   </div>
-                  <div className="rounded-sm border border-gray-700 bg-gray-800/50 px-3 py-1.5 text-xs font-medium text-gray-500">
+                  <div className="rounded-sm border border-gray-700 bg-gray-800/50 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-500">
                     <span className="block">C</span>
-                    <span className="text-[10px] text-gray-600">Jun 5-11</span>
+                    <span className="text-[9px] sm:text-[10px] text-gray-600">Jun 5-11</span>
                   </div>
                 </div>
                 
@@ -98,24 +116,24 @@ export default function Home() {
                 <div className="space-y-2.5 border-t border-gray-800/50 pt-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="h-0.5 w-14 bg-gray-700" />
-                      <span className="text-xs text-gray-500">Flights</span>
+                      <div className="h-0.5 w-14 bg-gray-700" aria-hidden="true" />
+                      <span className="text-xs text-gray-400">Flights</span>
                     </div>
-                    <span className="text-[10px] text-gray-600">2 links</span>
+                    <span className="text-[10px] text-gray-500">2 links</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="h-0.5 w-16 bg-gray-700" />
-                      <span className="text-xs text-gray-500">Stays</span>
+                      <div className="h-0.5 w-16 bg-gray-700" aria-hidden="true" />
+                      <span className="text-xs text-gray-400">Stays</span>
                     </div>
-                    <span className="text-[10px] text-gray-600">3 links</span>
+                    <span className="text-[10px] text-gray-500">3 links</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="h-0.5 w-12 bg-gray-700" />
-                      <span className="text-xs text-gray-500">Tickets</span>
+                      <div className="h-0.5 w-12 bg-gray-700" aria-hidden="true" />
+                      <span className="text-xs text-gray-400">Tickets</span>
                     </div>
-                    <span className="text-[10px] text-gray-600">1 link</span>
+                    <span className="text-[10px] text-gray-500">1 link</span>
                   </div>
                 </div>
               </div>
@@ -124,28 +142,34 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Visual Connector - Gradient fade from hero to cards */}
-      <div className="relative h-12 w-full bg-gradient-to-b from-[#0B0C0E] to-transparent" />
+      {/* Visual Connector - Gradient fade from hero to cards - Decorative only */}
+      <div className="relative h-12 w-full bg-gradient-to-b from-[#0B0C0E] to-transparent" aria-hidden="true" />
 
       {/* Cards Section - Starting Grid Layout */}
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Microcopy */}
-        <p className="mb-8 text-center text-sm text-gray-500">
-          3 steps. Pick a race. Set preferences. Get links.
-        </p>
+      <section id="main-content" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" aria-label="How it works">
+        {/* Section Header */}
+        <div className="mb-8 text-center">
+          <h2 className="text-2xl font-bold text-white sm:text-3xl">
+            How It Works
+          </h2>
+          <p className="mt-2 text-sm text-gray-400">
+            3 steps. Pick a race. Set preferences. Get links.
+          </p>
+        </div>
         
         <div className="relative">
-          {/* Track rail behind cards */}
-          <div className="absolute left-0 top-1/2 hidden h-px w-full -translate-y-1/2 bg-gray-800 lg:block" />
+          {/* Track rail behind cards - Decorative only */}
+          <div className="absolute left-0 top-1/2 hidden h-px w-full -translate-y-1/2 bg-gray-800 lg:block" aria-hidden="true" />
           
           <div className="grid gap-6 sm:grid-cols-1 lg:grid-cols-3">
             {/* Card 1 - Choose Your Race */}
             <Link
               href="/trip"
-              className="group relative flex h-full transform transition-all duration-200 hover:-translate-y-1"
+              className="group relative flex h-full transform transition-all duration-200 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 focus-visible:ring-2 focus-visible:ring-red-500"
+              aria-label="Step 1: Choose your race - Select from all 2026 F1 races around the world"
             >
-              {/* Red node on track rail */}
-              <div className="absolute -left-2 top-1/2 hidden h-2 w-2 -translate-y-1/2 rounded-full bg-red-600 transition-all duration-200 group-hover:scale-125 lg:block" />
+              {/* Red node on track rail - Decorative only */}
+              <div className="absolute -left-2 top-1/2 hidden h-2 w-2 -translate-y-1/2 rounded-full bg-red-600 transition-all duration-200 group-hover:scale-125 lg:block" aria-hidden="true" />
               
               <div className="flex min-h-[180px] w-full flex-col rounded-lg border border-gray-800/50 bg-gray-900/30 p-6 shadow-sm backdrop-blur-sm transition-all duration-200 group-hover:border-red-600/50 group-hover:shadow-md group-hover:shadow-red-600/10">
                 <div className="mb-3 flex items-center justify-between">
@@ -170,16 +194,17 @@ export default function Home() {
                   Choose Your Race
                   <span className="ml-2 block h-0.5 w-8 bg-red-600 transition-all duration-200 group-hover:w-12" />
                 </h3>
-                <p className="mt-3 flex-grow text-sm leading-relaxed text-gray-400">
+                <p className="mt-3 flex-grow text-sm leading-relaxed text-gray-300">
                   Select from all 2026 F1 races around the world
                 </p>
-                <div className="mt-4 flex items-center text-xs text-gray-500 transition-colors duration-200 group-hover:text-red-600">
+                <div className="mt-4 flex items-center text-xs text-gray-400 transition-colors duration-200 group-hover:text-red-600">
                   <span>Get started</span>
                   <svg
                     className="ml-1 h-3 w-3 transition-transform duration-200 group-hover:translate-x-1"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -195,10 +220,11 @@ export default function Home() {
             {/* Card 2 - Set Your Preferences */}
             <Link
               href="/trip"
-              className="group relative flex h-full transform transition-all duration-200 hover:-translate-y-1"
+              className="group relative flex h-full transform transition-all duration-200 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 focus-visible:ring-2 focus-visible:ring-red-500"
+              aria-label="Step 2: Set your preferences - Enter your origin city, trip duration, and budget tier"
             >
-              {/* Red node on track rail */}
-              <div className="absolute -left-2 top-1/2 hidden h-2 w-2 -translate-y-1/2 rounded-full bg-red-600 transition-all duration-200 group-hover:scale-125 lg:block" />
+              {/* Red node on track rail - Decorative only */}
+              <div className="absolute -left-2 top-1/2 hidden h-2 w-2 -translate-y-1/2 rounded-full bg-red-600 transition-all duration-200 group-hover:scale-125 lg:block" aria-hidden="true" />
               
               <div className="flex min-h-[180px] w-full flex-col rounded-lg border border-gray-800/50 bg-gray-900/30 p-6 shadow-sm backdrop-blur-sm transition-all duration-200 group-hover:border-red-600/50 group-hover:shadow-md group-hover:shadow-red-600/10">
                 <div className="mb-3 flex items-center justify-between">
@@ -229,16 +255,17 @@ export default function Home() {
                   Set Your Preferences
                   <span className="ml-2 block h-0.5 w-8 bg-red-600 transition-all duration-200 group-hover:w-12" />
                 </h3>
-                <p className="mt-3 flex-grow text-sm leading-relaxed text-gray-400">
+                <p className="mt-3 flex-grow text-sm leading-relaxed text-gray-300">
                   Enter your origin city, trip duration, and budget tier
                 </p>
-                <div className="mt-4 flex items-center text-xs text-gray-500 transition-colors duration-200 group-hover:text-red-600">
+                <div className="mt-4 flex items-center text-xs text-gray-400 transition-colors duration-200 group-hover:text-red-600">
                   <span>Get started</span>
                   <svg
                     className="ml-1 h-3 w-3 transition-transform duration-200 group-hover:translate-x-1"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -254,10 +281,11 @@ export default function Home() {
             {/* Card 3 - Get Your Itinerary */}
             <Link
               href="/trip"
-              className="group relative flex h-full transform transition-all duration-200 hover:-translate-y-1"
+              className="group relative flex h-full transform transition-all duration-200 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 focus-visible:ring-2 focus-visible:ring-red-500"
+              aria-label="Step 3: Get your itinerary - Receive curated date options with flight, hotel, and ticket links"
             >
-              {/* Red node on track rail */}
-              <div className="absolute -left-2 top-1/2 hidden h-2 w-2 -translate-y-1/2 rounded-full bg-red-600 transition-all duration-200 group-hover:scale-125 lg:block" />
+              {/* Red node on track rail - Decorative only */}
+              <div className="absolute -left-2 top-1/2 hidden h-2 w-2 -translate-y-1/2 rounded-full bg-red-600 transition-all duration-200 group-hover:scale-125 lg:block" aria-hidden="true" />
               
               <div className="flex min-h-[180px] w-full flex-col rounded-lg border border-gray-800/50 bg-gray-900/30 p-6 shadow-sm backdrop-blur-sm transition-all duration-200 group-hover:border-red-600/50 group-hover:shadow-md group-hover:shadow-red-600/10">
                 <div className="mb-3 flex items-center justify-between">
@@ -282,16 +310,17 @@ export default function Home() {
                   Get Your Itinerary
                   <span className="ml-2 block h-0.5 w-8 bg-red-600 transition-all duration-200 group-hover:w-12" />
                 </h3>
-                <p className="mt-3 flex-grow text-sm leading-relaxed text-gray-400">
+                <p className="mt-3 flex-grow text-sm leading-relaxed text-gray-300">
                   Receive curated date options with flight, hotel, and ticket links
                 </p>
-                <div className="mt-4 flex items-center text-xs text-gray-500 transition-colors duration-200 group-hover:text-red-600">
+                <div className="mt-4 flex items-center text-xs text-gray-400 transition-colors duration-200 group-hover:text-red-600">
                   <span>Get started</span>
                   <svg
                     className="ml-1 h-3 w-3 transition-transform duration-200 group-hover:translate-x-1"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -305,7 +334,7 @@ export default function Home() {
             </Link>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
