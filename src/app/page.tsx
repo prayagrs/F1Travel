@@ -1,14 +1,11 @@
 import Link from "next/link";
 import { Card } from "@/ui/components/Card";
+import { PreviewStrip } from "@/ui/components/PreviewStrip";
 
 /**
  * Public home page with CTA to /trip
  */
 export default function Home() {
-  // Social proof - Update with real numbers after alpha testing
-  // TODO: Replace with actual user count from database/analytics
-  const socialProofText = "F1 fans"; // Future: "500+ F1 fans" or dynamic count
-
   return (
     <div className="w-full">
       {/* Skip to main content link for keyboard navigation */}
@@ -19,17 +16,66 @@ export default function Home() {
         Skip to main content
       </a>
       
-      {/* Hero Section - Full width with integrated background */}
+      {/* Hero Section - Full width with integrated background and F1 visuals */}
       <div className="relative w-full overflow-hidden bg-[#0B0C0E] pt-20 sm:pt-24 lg:pt-28">
-        {/* Subtle diagonal gradient sweep - Decorative only */}
+        {/* F1 Checkered Flag Pattern - Very subtle */}
+        <div className="pointer-events-none absolute inset-0 checkered-pattern opacity-30" aria-hidden="true" />
+        
+        {/* Circuit Track Lines - Racing lines effect */}
+        <div className="pointer-events-none absolute inset-0 circuit-lines opacity-40" aria-hidden="true" />
+        
+        {/* F1 Grid Lines - Starting grid effect */}
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 grid-lines opacity-20" aria-hidden="true" />
+        
+        {/* Animated gradient background for visual energy */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.03]"
+          className="pointer-events-none absolute inset-0 opacity-20"
           style={{
             background:
-              "linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, transparent 50%, rgba(107, 114, 128, 0.05) 100%)",
+              "radial-gradient(ellipse at top right, rgba(220, 38, 38, 0.3) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(220, 38, 38, 0.15) 0%, transparent 50%)",
           }}
           aria-hidden="true"
         />
+        
+        {/* Enhanced racing gradient sweep - More dynamic motion */}
+        <div
+          className="pointer-events-none absolute inset-0 animate-racing-sweep"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(220, 38, 38, 0.25) 0%, transparent 70%), linear-gradient(135deg, rgba(220, 38, 38, 0.3) 0%, transparent 50%, rgba(59, 130, 246, 0.15) 100%)",
+          }}
+          aria-hidden="true"
+        />
+        
+        {/* Animated gradient sweep - Creates motion */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.12] animate-gradient-sweep"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(220, 38, 38, 0.25) 0%, transparent 40%, rgba(107, 114, 128, 0.15) 60%, transparent 100%)",
+          }}
+          aria-hidden="true"
+        />
+        
+        {/* Speed Lines Effect - Dynamic racing motion */}
+        <div className="pointer-events-none absolute inset-0 speed-lines opacity-40" aria-hidden="true" />
+        
+        {/* Speed Blur Effect - Racing motion streaks */}
+        <div 
+          className="pointer-events-none absolute inset-0 animate-speed-blur"
+          style={{
+            background: "linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.2), transparent)",
+          }}
+          aria-hidden="true"
+        />
+        
+        {/* Enhanced animated red accent dots with F1 pulse */}
+        <div className="pointer-events-none absolute top-20 right-20 h-2.5 w-2.5 rounded-full bg-red-600 animate-f1-pulse shadow-lg shadow-red-600/50" aria-hidden="true" />
+        <div className="pointer-events-none absolute bottom-32 left-16 h-2 w-2 rounded-full bg-red-500 animate-f1-pulse delay-1000 shadow-lg shadow-red-500/40" aria-hidden="true" />
+        <div className="pointer-events-none absolute top-1/3 right-1/4 h-1.5 w-1.5 rounded-full bg-red-400 animate-f1-pulse delay-2000 shadow-lg shadow-red-400/30" aria-hidden="true" />
+        
+        {/* Additional racing accent - Top left */}
+        <div className="pointer-events-none absolute top-1/4 left-1/5 h-1 w-1 rounded-full bg-blue-500 opacity-60 animate-pulse delay-500" aria-hidden="true" />
         
         <div className="relative z-10 mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
           <div className="grid gap-6 sm:gap-8 lg:grid-cols-2 lg:items-center lg:gap-12">
@@ -43,101 +89,77 @@ export default function Home() {
                 <div className="h-1.5 w-1.5 rounded-full bg-red-600" aria-hidden="true" />
               </div>
               
-              {/* Headline */}
-              <h1 className="text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-5xl">
+              {/* Headline - Increased size for better hierarchy */}
+              <h1 className="text-5xl font-bold leading-tight tracking-tight text-white sm:text-6xl lg:text-7xl">
                 YOUR F1 WEEKEND.
                 <br />
                 <span className="text-red-600">PLANNED.</span>
               </h1>
               
-              {/* Value Proposition - Benefit-focused */}
-              <div className="mt-5 space-y-3">
-                <p className="text-lg font-medium leading-relaxed text-white sm:text-xl">
-                  Stop juggling 10 tabs. Get your complete race weekend itinerary in seconds.
-                </p>
-                <p className="text-base leading-relaxed text-gray-300 sm:text-lg">
-                  Personalized flights, stays, tickets, and local experiences—all curated around the 2026 F1 calendar.
+              {/* Value Proposition - Single punchy line */}
+              <div className="mt-5">
+                <p className="text-xl font-medium leading-relaxed text-white sm:text-2xl">
+                  Stop juggling 10 tabs. Get your complete F1 weekend itinerary in seconds.
                 </p>
               </div>
               
               {/* CTA */}
-              <div className="mt-8 space-y-3">
-                <Link
-                  href="/trip"
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-red-600 px-6 py-3 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:translate-x-1 hover:brightness-110 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 focus-visible:ring-2 focus-visible:ring-red-500"
-                  aria-label="Plan your F1 race weekend trip"
-                >
-                  Plan Your Trip
-                  <span className="text-lg" aria-hidden="true">→</span>
-                </Link>
-                <p className="text-xs text-gray-400 sm:text-sm">
-                  Takes 30 seconds • No sign-up required to explore
-                </p>
-                {/* Social Proof */}
-                <p className="text-xs text-gray-400 sm:text-sm">
-                  Join <span className="font-medium text-gray-300">{socialProofText}</span> planning their 2026 weekends
-                </p>
-              </div>
-            </div>
-            
-            {/* Right Column: Preview Strip - Visible on all screen sizes */}
-            <div className="relative order-2 lg:order-none" role="complementary" aria-label="Sample itinerary preview">
-              <div className="rounded-lg border border-gray-800/50 bg-gray-900/30 p-4 sm:p-5 lg:p-6 backdrop-blur-sm">
-                {/* Sample output label */}
-                <div className="mb-3 sm:mb-4">
-                  <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wider text-gray-400">
-                    Sample Output
-                  </span>
+              <div className="mt-8 space-y-4">
+                {/* Primary CTA - Single, prominent */}
+                <div className="flex justify-center sm:justify-start">
+                  <Link
+                    href="/trip"
+                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-red-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:translate-x-1 hover:brightness-110 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 focus-visible:ring-2 focus-visible:ring-red-500"
+                    aria-label="Plan your F1 race weekend trip"
+                  >
+                    Plan Your Trip
+                    <span className="text-xl" aria-hidden="true">→</span>
+                  </Link>
                 </div>
                 
-                {/* Race name */}
-                <div className="mb-3 sm:mb-4">
-                  <h3 className="text-xs sm:text-sm font-semibold text-white">Monaco Grand Prix</h3>
-                  <p className="text-[10px] sm:text-xs text-gray-400">Jun 7, 2026 • Monte Carlo</p>
+                {/* Secondary action - Subtle text link */}
+                <div className="flex flex-col items-center gap-1.5 sm:items-start">
+                  <Link
+                    href="/sample-itinerary"
+                    className="text-sm text-gray-400 transition-colors hover:text-red-400 underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 focus-visible:ring-2 focus-visible:ring-red-500"
+                    aria-label="View sample itinerary to see what you'll get"
+                  >
+                    View sample itinerary
+                  </Link>
+                  <p className="text-xs text-gray-500">
+                    Takes 30 seconds • No sign-up required to explore
+                  </p>
                 </div>
                 
-                {/* Date option pills */}
-                <div className="mb-4 sm:mb-5 flex gap-1.5 sm:gap-2">
-                  <div className="animate-subtle-pulse rounded-sm border border-red-600/30 bg-red-600/10 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-red-400 shadow-sm shadow-red-600/20">
-                    <span className="block">A</span>
-                    <span className="text-[9px] sm:text-[10px] text-red-500/70">Jun 3-9</span>
+                {/* Essential Trust Signals - Consolidated to one line */}
+                <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-gray-400 sm:justify-start">
+                  <div className="flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5 text-green-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span>Free to use</span>
                   </div>
-                  <div className="rounded-sm border border-gray-700 bg-gray-800/50 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-500">
-                    <span className="block">B</span>
-                    <span className="text-[9px] sm:text-[10px] text-gray-600">Jun 4-10</span>
+                  <span className="text-gray-600">•</span>
+                  <div className="flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>Secure</span>
                   </div>
-                  <div className="rounded-sm border border-gray-700 bg-gray-800/50 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium text-gray-500">
-                    <span className="block">C</span>
-                    <span className="text-[9px] sm:text-[10px] text-gray-600">Jun 5-11</span>
-                  </div>
-                </div>
-                
-                {/* Preview lines with realistic data */}
-                <div className="space-y-2.5 border-t border-gray-800/50 pt-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-0.5 w-14 bg-gray-700" aria-hidden="true" />
-                      <span className="text-xs text-gray-400">Flights</span>
-                    </div>
-                    <span className="text-[10px] text-gray-500">2 links</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-0.5 w-16 bg-gray-700" aria-hidden="true" />
-                      <span className="text-xs text-gray-400">Stays</span>
-                    </div>
-                    <span className="text-[10px] text-gray-500">3 links</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-0.5 w-12 bg-gray-700" aria-hidden="true" />
-                      <span className="text-xs text-gray-400">Tickets</span>
-                    </div>
-                    <span className="text-[10px] text-gray-500">1 link</span>
+                  <span className="text-gray-600">•</span>
+                  <div className="flex items-center gap-1.5">
+                    <svg className="h-3.5 w-3.5 text-red-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                      <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                    </svg>
+                    <span>No credit card</span>
                   </div>
                 </div>
               </div>
             </div>
+            
+            {/* Right Column: Preview Strip - Enhanced for F1 fans with interactivity */}
+            <PreviewStrip />
           </div>
         </div>
       </div>

@@ -13,6 +13,27 @@ type TripFormProps = {
 };
 
 /**
+ * Formats a race date ISO string to a readable format
+ * Example: "2026-05-24" -> "May 24, 2026"
+ */
+function formatRaceDate(raceDateISO: string): string {
+  const date = new Date(raceDateISO);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+/**
+ * Formats race name for dropdown display
+ * Example: "Monaco Grand Prix" -> "Monaco GP"
+ */
+function formatRaceName(name: string): string {
+  return name.replace("Grand Prix", "GP");
+}
+
+/**
  * Client component form for creating a trip itinerary.
  * Fetches races from API and submits to /api/itineraries/generate.
  */
@@ -29,6 +50,84 @@ export function TripForm({ onSubmit }: TripFormProps) {
     durationDays: 5,
     budgetTier: "$$",
   });
+
+  // Validation state
+  const [validationErrors, setValidationErrors] = useState<{
+    originCity?: string;
+    raceId?: string;
+    durationDays?: string;
+    budgetTier?: string;
+  }>({});
+
+  // Popular cities for autocomplete suggestions
+  const popularCities = [
+    "London, UK",
+    "New York, USA",
+    "Tokyo, Japan",
+    "Paris, France",
+    "Berlin, Germany",
+    "Madrid, Spain",
+    "Rome, Italy",
+    "Amsterdam, Netherlands",
+    "Dubai, UAE",
+    "Singapore",
+    "Sydney, Australia",
+    "Toronto, Canada",
+  ];
+
+  // Real-time validation
+  const validateField = (field: string, value: string | number) => {
+    const errors = { ...validationErrors };
+    
+    switch (field) {
+      case "originCity":
+        if (typeof value === "string") {
+          if (value.length < 2) {
+            errors.originCity = "City name must be at least 2 characters";
+          } else {
+            delete errors.originCity;
+          }
+        }
+        break;
+      case "raceId":
+        if (!value) {
+          errors.raceId = "Please select a race weekend";
+        } else {
+          delete errors.raceId;
+        }
+        break;
+      case "durationDays":
+        if (typeof value === "number") {
+          if (value < 2 || value > 30) {
+            errors.durationDays = "Duration must be between 2 and 30 days";
+          } else {
+            delete errors.durationDays;
+          }
+        }
+        break;
+      case "budgetTier":
+        if (!value) {
+          errors.budgetTier = "Please select a budget tier";
+        } else {
+          delete errors.budgetTier;
+        }
+        break;
+    }
+    
+    setValidationErrors(errors);
+  };
+
+  // Check if form is valid
+  const isFormValid = () => {
+    return (
+      formData.originCity.length >= 2 &&
+      formData.raceId !== "" &&
+      formData.durationDays >= 2 &&
+      formData.durationDays <= 30 &&
+      !!formData.budgetTier &&
+      Object.keys(validationErrors).length === 0
+    );
+  };
 
   // Fetch races on mount
   useEffect(() => {
@@ -85,62 +184,55 @@ export function TripForm({ onSubmit }: TripFormProps) {
 
   if (fetchingRaces) {
     return (
-      <Card>
-        <div className="space-y-6">
+      <Card className="border-gray-800/50 bg-gray-900/30 backdrop-blur-sm">
+        <div className="space-y-5">
           <div>
-            <Skeleton className="mb-2 h-4 w-24" />
-            <SkeletonInput />
-          </div>
-          <div>
-            <Skeleton className="mb-2 h-4 w-32" />
+            <Skeleton className="mb-1 h-4 w-28" />
+            <Skeleton className="mb-2 h-3 w-48" />
             <SkeletonSelect />
           </div>
           <div>
-            <Skeleton className="mb-2 h-4 w-28" />
+            <Skeleton className="mb-1 h-4 w-24" />
+            <Skeleton className="mb-2 h-3 w-36" />
             <SkeletonInput />
           </div>
           <div>
-            <Skeleton className="mb-2 h-4 w-24" />
+            <Skeleton className="mb-1 h-4 w-28" />
+            <Skeleton className="mb-2 h-3 w-52" />
+            <SkeletonInput />
+          </div>
+          <div>
+            <Skeleton className="mb-1 h-4 w-24" />
+            <Skeleton className="mb-2 h-3 w-40" />
             <SkeletonSelect />
           </div>
-          <SkeletonButton />
+          <div className="pt-2 border-t border-gray-800/50">
+            <SkeletonButton />
+          </div>
         </div>
       </Card>
     );
   }
 
-  return (
-    <Card>
-      <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
-        <div>
-          <label
-            htmlFor="originCity"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Origin City
-          </label>
-          <input
-            type="text"
-            id="originCity"
-            required
-            minLength={2}
-            value={formData.originCity}
-            onChange={(e) =>
-              setFormData({ ...formData, originCity: e.target.value })
-            }
-            disabled={loading}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            placeholder="e.g., London"
-          />
-        </div>
+  // Sort races by date (upcoming first)
+  const sortedRaces = [...races].sort((a, b) => 
+    new Date(a.raceDateISO).getTime() - new Date(b.raceDateISO).getTime()
+  );
 
+  return (
+    <Card className="border-gray-800/50 bg-gray-900/30 backdrop-blur-sm shadow-lg shadow-red-600/5 transition-all duration-200 hover:border-red-600/30 hover:shadow-red-600/10">
+      <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in">
+        {/* Race Weekend - First and most prominent */}
         <div>
           <label
             htmlFor="raceId"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="block text-sm font-medium text-gray-300 mb-1"
           >
             Race Weekend
           </label>
+          <p className="text-xs text-gray-500 mb-2" id="raceId-help">
+            Choose which F1 race weekend you want to attend
+          </p>
           <select
             id="raceId"
             required
@@ -149,24 +241,87 @@ export function TripForm({ onSubmit }: TripFormProps) {
               setFormData({ ...formData, raceId: e.target.value })
             }
             disabled={loading}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            className="mt-1 block w-full rounded-md border border-gray-700 bg-gray-800/50 px-3 py-2.5 text-white shadow-sm transition-all duration-200 focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-600"
+            style={{ colorScheme: 'dark' }}
           >
-            <option value="">Select a race...</option>
-            {races.map((race) => (
-              <option key={race.id} value={race.id}>
-                {race.name} - {race.city}, {race.country} ({race.raceDateISO})
+            <option value="" className="bg-gray-800 text-white">Select a race...</option>
+            {sortedRaces.map((race) => (
+              <option key={race.id} value={race.id} className="bg-gray-800 text-white">
+                {formatRaceName(race.name)} • {formatRaceDate(race.raceDateISO)} • {race.city}, {race.country}
               </option>
             ))}
           </select>
         </div>
 
+        {/* Origin City - Second */}
+        <div>
+          <label
+            htmlFor="originCity"
+            className="block text-sm font-medium text-gray-300 mb-1"
+          >
+            Origin City
+          </label>
+          <p className="text-xs text-gray-500 mb-2" id="originCity-help">
+            Where are you flying from?
+          </p>
+          <input
+            type="text"
+            id="originCity"
+            required
+            minLength={2}
+            value={formData.originCity}
+            onChange={(e) => {
+              const value = e.target.value;
+              setFormData({ ...formData, originCity: value });
+              validateField("originCity", value);
+            }}
+            onBlur={() => validateField("originCity", formData.originCity)}
+            disabled={loading}
+            list="popularCities"
+            autoComplete="off"
+            aria-describedby="originCity-help originCity-error"
+            aria-invalid={validationErrors.originCity ? "true" : "false"}
+            className={`mt-1 block w-full rounded-md border px-3 py-2.5 text-white placeholder-gray-500 shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-600 ${
+              validationErrors.originCity
+                ? "border-red-600 bg-gray-800/50"
+                : formData.originCity.length >= 2
+                ? "border-green-600/50 bg-gray-800/50"
+                : "border-gray-700 bg-gray-800/50"
+            }`}
+            placeholder="e.g., London, New York, Tokyo"
+          />
+          <datalist id="popularCities">
+            {popularCities.map((city) => (
+              <option key={city} value={city} />
+            ))}
+          </datalist>
+          {validationErrors.originCity && (
+            <p
+              id="originCity-error"
+              className="mt-1 text-xs text-red-400"
+              role="alert"
+            >
+              {validationErrors.originCity}
+            </p>
+          )}
+          {formData.originCity.length >= 2 && !validationErrors.originCity && (
+            <p className="mt-1 text-xs text-green-400" aria-live="polite">
+              ✓ Valid
+            </p>
+          )}
+        </div>
+
+        {/* Trip Duration - Third */}
         <div>
           <label
             htmlFor="durationDays"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="block text-sm font-medium text-gray-300 mb-1"
           >
-            Trip Duration (days)
+            Trip Duration
           </label>
+          <p className="text-xs text-gray-500 mb-2" id="durationDays-help">
+            How many days? (Typical: 3-5 days for a race weekend)
+          </p>
           <input
             type="number"
             id="durationDays"
@@ -174,59 +329,147 @@ export function TripForm({ onSubmit }: TripFormProps) {
             min={2}
             max={30}
             value={formData.durationDays}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                durationDays: parseInt(e.target.value) || 5,
-              })
-            }
+            onChange={(e) => {
+              const value = parseInt(e.target.value) || 5;
+              setFormData({ ...formData, durationDays: value });
+              validateField("durationDays", value);
+            }}
+            onBlur={() => validateField("durationDays", formData.durationDays)}
             disabled={loading}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            aria-describedby="durationDays-help durationDays-error"
+            aria-invalid={validationErrors.durationDays ? "true" : "false"}
+            className={`mt-1 block w-full rounded-md border px-3 py-2.5 text-white shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-600 min-h-[44px] ${
+              validationErrors.durationDays
+                ? "border-red-600 bg-gray-800/50"
+                : formData.durationDays >= 2 && formData.durationDays <= 30
+                ? "border-green-600/50 bg-gray-800/50"
+                : "border-gray-700 bg-gray-800/50"
+            }`}
           />
+          {validationErrors.durationDays && (
+            <p
+              id="durationDays-error"
+              className="mt-1 text-xs text-red-400"
+              role="alert"
+            >
+              {validationErrors.durationDays}
+            </p>
+          )}
+          {formData.durationDays >= 2 && formData.durationDays <= 30 && !validationErrors.durationDays && (
+            <p className="mt-1 text-xs text-green-400" aria-live="polite">
+              ✓ Valid
+            </p>
+          )}
         </div>
 
+        {/* Budget Tier - Fourth - Visual Button Selector */}
         <div>
-          <label
-            htmlFor="budgetTier"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
+          <label id="budgetTier-label" className="block text-sm font-medium text-gray-300 mb-1">
             Budget Tier
           </label>
-          <select
-            id="budgetTier"
-            required
-            value={formData.budgetTier}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                budgetTier: e.target.value as BudgetTier,
-              })
-            }
-            disabled={loading}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          <p className="text-xs text-gray-500 mb-3" id="budgetTier-help">
+            Select your preferred budget level
+          </p>
+          <div
+            role="radiogroup"
+            aria-labelledby="budgetTier-label"
+            aria-describedby="budgetTier-help budgetTier-error"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-3"
           >
-            <option value="$">$ - Budget</option>
-            <option value="$$">$$ - Mid-range</option>
-            <option value="$$$">$$$ - Luxury</option>
-          </select>
+            {[
+              { value: "$", label: "Budget", icon: "💰", desc: "Economy flights, budget hotels" },
+              { value: "$$", label: "Mid-range", icon: "💼", desc: "Standard flights, 3-4 star hotels" },
+              { value: "$$$", label: "Luxury", icon: "✨", desc: "Premium flights, 5-star hotels" },
+            ].map((tier) => (
+              <button
+                key={tier.value}
+                type="button"
+                onClick={() => {
+                  setFormData({ ...formData, budgetTier: tier.value as BudgetTier });
+                  validateField("budgetTier", tier.value);
+                }}
+                disabled={loading}
+                aria-checked={formData.budgetTier === tier.value}
+                role="radio"
+                className={`relative flex flex-col items-center justify-center gap-2 rounded-lg border-2 px-4 py-4 min-h-[100px] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation ${
+                  formData.budgetTier === tier.value
+                    ? "border-red-600 bg-red-600/10 shadow-lg shadow-red-600/20"
+                    : "border-gray-700 bg-gray-800/50 hover:border-gray-600 hover:bg-gray-800/70"
+                }`}
+              >
+                <span className="text-2xl" aria-hidden="true">
+                  {tier.icon}
+                </span>
+                <div className="text-center">
+                  <div className="text-base font-semibold text-white">
+                    {tier.value} {tier.label}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">{tier.desc}</div>
+                </div>
+                {formData.budgetTier === tier.value && (
+                  <div className="absolute top-2 right-2">
+                    <svg
+                      className="h-5 w-5 text-red-600"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+          <input
+            type="hidden"
+            id="budgetTier"
+            name="budgetTier"
+            value={formData.budgetTier}
+            required
+            aria-invalid={validationErrors.budgetTier ? "true" : "false"}
+          />
+          {validationErrors.budgetTier && (
+            <p
+              id="budgetTier-error"
+              className="mt-2 text-xs text-red-400"
+              role="alert"
+            >
+              {validationErrors.budgetTier}
+            </p>
+          )}
         </div>
 
         {error && (
-          <div className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
+          <div className="rounded-md bg-red-900/30 border border-red-800/50 p-4 text-sm text-red-300">
             {error}
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
-        >
-          {loading && <Spinner size="sm" className="text-white" />}
-          <span>{loading ? "Generating itinerary..." : "Generate Itinerary"}</span>
-        </button>
+        {/* Visual divider before submit */}
+        <div className="pt-2 border-t border-gray-800/50">
+          <button
+            type="submit"
+            disabled={loading || !isFormValid()}
+            aria-disabled={loading || !isFormValid()}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-red-600 px-6 py-3.5 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:translate-x-1 hover:brightness-110 hover:shadow-xl hover:shadow-red-600/20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:brightness-100 disabled:hover:bg-red-600 min-h-[48px] touch-manipulation"
+          >
+            {loading && <Spinner size="sm" className="text-white" />}
+            <span>{loading ? "Generating itinerary..." : "Generate Itinerary"}</span>
+            {!loading && <span className="text-lg" aria-hidden="true">→</span>}
+          </button>
+          {!isFormValid() && !loading && (
+            <p className="mt-2 text-xs text-gray-500 text-center" role="status">
+              Please complete all fields correctly to continue
+            </p>
+          )}
+        </div>
 
-        <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-3 text-xs text-gray-400">
           Note: Prices and availability may change. Please verify with providers before booking.
         </p>
       </form>

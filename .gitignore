@@ -52,4 +52,5 @@ DEBUG_*.md
 QUICK_*.md
 
 # documentation (local only, not for commit)
-UX_IMPROVEMENTS_REQUIREMENTS.md
+*.md
+!README.md

@@ -106,3 +106,182 @@ body {
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
 }
+
+/* Gradient sweep animation for hero visual energy */
+@keyframes gradient-sweep {
+  0% {
+    transform: translateX(-100%) translateY(-100%);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%);
+  }
+}
+
+.animate-gradient-sweep {
+  animation: gradient-sweep 8s ease-in-out infinite;
+}
+
+/* Enhanced racing gradient sweep - More dynamic */
+@keyframes racing-sweep {
+  0% {
+    transform: translateX(-150%) translateY(-150%) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateX(150%) translateY(150%) rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+.animate-racing-sweep {
+  animation: racing-sweep 12s ease-in-out infinite;
+}
+
+/* F1 Pulse - Stronger, more dynamic pulse */
+@keyframes f1-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.animate-f1-pulse {
+  animation: f1-pulse 2s ease-in-out infinite;
+}
+
+/* Speed Blur Effect - Racing motion */
+@keyframes speed-blur {
+  0% {
+    transform: translateX(-100%) skewX(-10deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateX(100%) skewX(-10deg);
+    opacity: 0;
+  }
+}
+
+.animate-speed-blur {
+  animation: speed-blur 4s ease-in-out infinite;
+}
+
+/* Pulse delay utilities for staggered animations */
+.delay-1000 {
+  animation-delay: 1s;
+}
+
+.delay-2000 {
+  animation-delay: 2s;
+}
+
+/* Hide scrollbar for circuit icons row */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Touch manipulation for better mobile interactions */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Ensure tooltips can overflow their containers */
+footer [role="tooltip"] {
+  position: absolute !important;
+  z-index: 9999 !important;
+}
+
+/* F1 Checkered Flag Pattern - Subtle background texture */
+.checkered-pattern {
+  background-image: 
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(255, 255, 255, 0.02) 10px,
+      rgba(255, 255, 255, 0.02) 20px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 10px,
+      rgba(255, 255, 255, 0.02) 10px,
+      rgba(255, 255, 255, 0.02) 20px
+    );
+}
+
+/* Circuit Track Lines - Decorative racing lines */
+.circuit-lines {
+  background-image: 
+    linear-gradient(90deg, transparent 0%, rgba(220, 38, 38, 0.1) 50%, transparent 100%),
+    linear-gradient(0deg, transparent 0%, rgba(220, 38, 38, 0.05) 50%, transparent 100%);
+  background-size: 200px 2px, 2px 200px;
+  background-position: 0 0, 0 0;
+  animation: circuit-lines-move 20s linear infinite;
+}
+
+@keyframes circuit-lines-move {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 200px 0, 0 200px;
+  }
+}
+
+/* F1 Speed Lines - Dynamic racing effect */
+.speed-lines {
+  position: relative;
+  overflow: hidden;
+}
+
+.speed-lines::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(220, 38, 38, 0.1) 50%,
+    transparent
+  );
+  animation: speed-sweep 3s ease-in-out infinite;
+}
+
+@keyframes speed-sweep {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* F1 Grid Lines - Starting grid effect */
+.grid-lines {
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(220, 38, 38, 0.1) 2px,
+      rgba(220, 38, 38, 0.1) 4px
+    );
+}
