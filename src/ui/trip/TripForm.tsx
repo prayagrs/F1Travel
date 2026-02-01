@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, type FormEvent } from "react"
 import { useRouter } from "next/navigation";
 import type { TripRequest, BudgetTier } from "@/domain/itinerary/types";
 import type { RaceWeekend } from "@/domain/races/types";
+import worldCities from "@/content/cities.json";
 import { Card } from "@/ui/components/Card";
 import { Skeleton, SkeletonInput, SkeletonSelect, SkeletonButton } from "@/ui/components/Skeleton";
 import { Spinner } from "@/ui/components/Spinner";
@@ -65,25 +66,21 @@ export function TripForm({ onSubmit }: TripFormProps) {
   const originInputRef = useRef<HTMLInputElement>(null);
   const originListRef = useRef<HTMLUListElement>(null);
 
-  // Popular cities for autocomplete suggestions
-  const popularCities = [
-    "London, UK",
-    "New York, USA",
-    "Tokyo, Japan",
-    "Paris, France",
-    "Berlin, Germany",
-    "Madrid, Spain",
-    "Rome, Italy",
-    "Amsterdam, Netherlands",
-    "Dubai, UAE",
-    "Singapore",
-    "Sydney, Australia",
-    "Toronto, Canada",
-  ];
-  const filteredCities = popularCities.filter((city) =>
-    city.toLowerCase().includes(formData.originCity.trim().toLowerCase())
-  );
-  const showOriginDropdown = originDropdownOpen && (formData.originCity.length >= 0) && filteredCities.length > 0;
+  // World cities for autocomplete (static dataset; any city can still be typed)
+  const citiesList: string[] = worldCities as string[];
+  const query = formData.originCity.trim().toLowerCase();
+  const filteredCities = query.length < 2
+    ? citiesList.slice(0, 15)
+    : citiesList.filter((city) =>
+        city.toLowerCase().includes(query)
+      ).slice(0, 15);
+  const showOriginDropdown = originDropdownOpen && filteredCities.length > 0;
+
+  useEffect(() => {
+    setOriginHighlightIndex((i) =>
+      i >= filteredCities.length ? Math.max(-1, filteredCities.length - 1) : i
+    );
+  }, [filteredCities.length]);
 
   const selectOriginCity = useCallback((city: string) => {
     setFormData((prev) => ({ ...prev, originCity: city }));
@@ -352,9 +349,9 @@ export function TripForm({ onSubmit }: TripFormProps) {
               className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-md border border-gray-700 bg-gray-900 py-1 shadow-lg ring-1 ring-black/5"
             >
               <li className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-gray-500 border-b border-gray-800" aria-hidden="true">
-                Popular — or type any city
+                {query.length < 2 ? "Worldwide cities — type to search" : "Matches — or type any city"}
               </li>
-              {filteredCities.slice(0, 12).map((city, i) => (
+              {filteredCities.map((city, i) => (
                 <li
                   key={city}
                   id={`originCity-option-${i}`}
