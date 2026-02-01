@@ -26,18 +26,15 @@ export function PreviewStrip() {
         className="group block rounded-lg border border-gray-800/50 bg-gradient-to-br from-gray-900/50 via-gray-900/30 to-gray-900/20 p-4 sm:p-5 lg:p-6 backdrop-blur-sm transition-all duration-200 hover:border-red-600/60 hover:shadow-xl hover:shadow-red-600/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 focus-visible:ring-2 focus-visible:ring-red-500 relative overflow-hidden speed-lines"
         aria-label="Click to view full sample itinerary"
       >
-        {/* Enhanced circuit background illustration with F1 pulse */}
+        {/* Monaco GP circuit SVG - actual track layout */}
         <div className="absolute top-4 right-4 opacity-15 group-hover:opacity-25 transition-opacity animate-f1-pulse" aria-hidden="true">
-          <svg width="80" height="80" viewBox="0 0 32 32" fill="none" className="text-red-600">
-            <path
-              d="M8 24 L8 18 Q8 14 12 14 Q16 14 20 16 Q24 18 26 18 L26 8 Q26 6 24 6 L18 6 L18 10 L14 10 L14 6 L8 6 Q6 6 6 8 L6 14 Q6 16 8 16 Q10 16 12 18 Q14 20 16 20 Q18 20 20 18 Q22 16 24 16 Q26 16 26 18 L26 22 Q26 24 24 24 L18 24 Q16 24 16 22 Q16 20 14 20 Q12 20 10 22 Q8 24 8 22 Z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-          </svg>
+          <img
+            src="/circuit-svg/monaco-svgfind-com.svg"
+            alt=""
+            width={80}
+            height={80}
+            className="h-20 w-20 object-contain text-red-600 [filter:invert(0.3)_sepia(1)_saturate(5)_hue-rotate(320deg)]"
+          />
         </div>
 
         {/* Preview label with F1 badge */}

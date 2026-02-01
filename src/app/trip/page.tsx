@@ -103,7 +103,7 @@ export default async function TripPage() {
       <div className="pointer-events-none absolute bottom-32 left-16 h-2 w-2 rounded-full bg-red-500 animate-f1-pulse delay-1000 shadow-lg shadow-red-500/40" aria-hidden="true" />
       <div className="pointer-events-none absolute top-1/3 right-1/4 h-1.5 w-1.5 rounded-full bg-red-400 animate-f1-pulse delay-2000 shadow-lg shadow-red-400/30" aria-hidden="true" />
       
-      <div className="relative z-10 mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-3xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
         {/* Badge */}
         <div className="mb-3 inline-flex items-center gap-2 border-l-2 border-red-600 pl-3">
           <span className="text-xs font-semibold uppercase tracking-wider text-gray-300">

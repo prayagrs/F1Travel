@@ -1,0 +1,15 @@
+# F1 Travel – Project context for Cursor
+
+## Stack
+- Next.js 16 (App Router), React 19, TypeScript
+- Prisma 5 + PostgreSQL (Supabase)
+- NextAuth for auth; Tailwind CSS for styling
+
+## Conventions
+- Prefer server components; use "use client" only when needed (state, events, browser APIs).
+- Data: domain types in src/domain, server/db in src/server, UI in src/ui.
+- Use existing components (Card, Section, etc.); match F1 theme (red accents, dark bg, circuit motifs).
+- Supabase: DATABASE_URL must include ?sslmode=require for Prisma CLI and runtime.
+
+## Output
+- Prefer small, targeted edits. Preserve existing patterns and file structure unless the task requires otherwise.
