@@ -60,59 +60,49 @@ export function TripForm({ onSubmit }: TripFormProps) {
     budgetTier?: string;
   }>({});
 
-  // Origin city autocomplete
-  const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
-  const [originHighlightIndex, setOriginHighlightIndex] = useState(-1);
+  // Origin city inline autocomplete (no dropdown)
   const originInputRef = useRef<HTMLInputElement>(null);
-  const originListRef = useRef<HTMLUListElement>(null);
+  const originMeasureRef = useRef<HTMLSpanElement>(null);
+  const [completionLeftPx, setCompletionLeftPx] = useState(0);
 
-  // World cities for autocomplete (static dataset; any city can still be typed)
+  // World cities for inline suggestion (first match only; any city can still be typed)
   const citiesList: string[] = worldCities as string[];
   const query = formData.originCity.trim().toLowerCase();
-  const filteredCities = query.length < 2
-    ? citiesList.slice(0, 15)
-    : citiesList.filter((city) =>
-        city.toLowerCase().includes(query)
-      ).slice(0, 15);
-  const showOriginDropdown = originDropdownOpen && filteredCities.length > 0;
+  const filteredCities = query.length < 1
+    ? []
+    : citiesList.filter((city) => city.toLowerCase().includes(query));
+  const firstMatch = filteredCities.find((c) => c.toLowerCase().startsWith(query)) ?? filteredCities[0];
+  const showInlineSuggestion =
+    query.length >= 1 &&
+    firstMatch &&
+    firstMatch.toLowerCase() !== query.toLowerCase() &&
+    firstMatch.toLowerCase().startsWith(query);
+  const completionSuffix = showInlineSuggestion
+    ? firstMatch.slice(query.length)
+    : "";
 
-  useEffect(() => {
-    setOriginHighlightIndex((i) =>
-      i >= filteredCities.length ? Math.max(-1, filteredCities.length - 1) : i
-    );
-  }, [filteredCities.length]);
+  const acceptInlineSuggestion = useCallback(() => {
+    if (!showInlineSuggestion || !firstMatch) return;
+    setFormData((prev) => ({ ...prev, originCity: firstMatch }));
+    validateField("originCity", firstMatch);
+  }, [showInlineSuggestion, firstMatch]);
 
-  const selectOriginCity = useCallback((city: string) => {
-    setFormData((prev) => ({ ...prev, originCity: city }));
-    validateField("originCity", city);
-    setOriginDropdownOpen(false);
-    setOriginHighlightIndex(-1);
-    originInputRef.current?.blur();
-  }, []);
-
-  const handleOriginKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showOriginDropdown) return;
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setOriginHighlightIndex((i) => (i < filteredCities.length - 1 ? i + 1 : i));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setOriginHighlightIndex((i) => (i > 0 ? i - 1 : -1));
-    } else if (e.key === "Enter" && originHighlightIndex >= 0 && filteredCities[originHighlightIndex]) {
-      e.preventDefault();
-      selectOriginCity(filteredCities[originHighlightIndex]);
-    } else if (e.key === "Escape") {
-      setOriginDropdownOpen(false);
-      setOriginHighlightIndex(-1);
-    }
-  }, [showOriginDropdown, filteredCities, originHighlightIndex, selectOriginCity]);
-
-  useEffect(() => {
-    if (originHighlightIndex >= 0 && originListRef.current) {
-      const el = originListRef.current.querySelector(`#originCity-option-${originHighlightIndex}`);
-      el?.scrollIntoView({ block: "nearest" });
-    }
-  }, [originHighlightIndex]);
+  const handleOriginKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Tab" || e.key === "Enter") {
+        if (showInlineSuggestion && firstMatch) {
+          e.preventDefault();
+          acceptInlineSuggestion();
+        }
+      } else if (e.key === "Escape") {
+        if (showInlineSuggestion) {
+          e.preventDefault();
+          originInputRef.current?.blur();
+        }
+      }
+    },
+    [showInlineSuggestion, firstMatch, acceptInlineSuggestion]
+  );
 
   // Real-time validation
   const validateField = (field: string, value: string | number) => {
@@ -276,11 +266,22 @@ export function TripForm({ onSubmit }: TripFormProps) {
             id="raceId"
             required
             value={formData.raceId}
-            onChange={(e) =>
-              setFormData({ ...formData, raceId: e.target.value })
-            }
+            onChange={(e) => {
+              const value = e.target.value;
+              setFormData({ ...formData, raceId: value });
+              validateField("raceId", value);
+            }}
+            onBlur={() => validateField("raceId", formData.raceId)}
             disabled={loading}
-            className="mt-1 block w-full rounded-md border border-gray-700 bg-gray-800/50 px-3 py-2.5 text-white shadow-sm transition-all duration-200 focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-600"
+            aria-describedby="raceId-help raceId-error"
+            aria-invalid={validationErrors.raceId ? "true" : "false"}
+            className={`mt-1 block w-full rounded-md border px-3 py-2.5 text-white shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-600 min-h-[44px] ${
+              validationErrors.raceId
+                ? "border-red-600 bg-gray-800/50"
+                : formData.raceId
+                ? "border-green-600/50 bg-gray-800/50"
+                : "border-gray-700 bg-gray-800/50"
+            }`}
             style={{ colorScheme: 'dark' }}
           >
             <option value="" className="bg-gray-800 text-white">Select a race...</option>
@@ -290,9 +291,18 @@ export function TripForm({ onSubmit }: TripFormProps) {
               </option>
             ))}
           </select>
+          {validationErrors.raceId && (
+            <p
+              id="raceId-error"
+              className="mt-1 text-xs text-red-400"
+              role="alert"
+            >
+              {validationErrors.raceId}
+            </p>
+          )}
         </div>
 
-        {/* Origin City - Second - Autocomplete dropdown */}
+        {/* Origin City - Second - Inline autocomplete (no dropdown) */}
         <div className="relative">
           <label
             htmlFor="originCity"
@@ -301,74 +311,59 @@ export function TripForm({ onSubmit }: TripFormProps) {
             Origin City
           </label>
           <p className="text-xs text-gray-500 mb-1.5" id="originCity-help">
-            Any city worldwide. Type your city or pick a popular one below.
+            Any city worldwide. Type your city or use the suggestion (Tab to accept).
           </p>
-          <input
-            ref={originInputRef}
-            type="text"
-            id="originCity"
-            required
-            minLength={2}
-            value={formData.originCity}
-            onChange={(e) => {
-              const value = e.target.value;
-              setFormData({ ...formData, originCity: value });
-              validateField("originCity", value);
-              setOriginDropdownOpen(true);
-              setOriginHighlightIndex(-1);
-            }}
-            onFocus={() => setOriginDropdownOpen(true)}
-            onBlur={() => {
-              validateField("originCity", formData.originCity);
-              setTimeout(() => setOriginDropdownOpen(false), 150);
-            }}
-            onKeyDown={handleOriginKeyDown}
-            disabled={loading}
-            autoComplete="off"
-            aria-describedby="originCity-help originCity-error"
-            aria-invalid={validationErrors.originCity ? "true" : "false"}
-            aria-autocomplete="list"
-            aria-expanded={showOriginDropdown}
-            aria-controls="originCity-list"
-            aria-activedescendant={originHighlightIndex >= 0 ? `originCity-option-${originHighlightIndex}` : undefined}
-            className={`mt-1 block w-full rounded-md border px-3 py-2.5 text-white placeholder-gray-500 shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-600 min-h-[44px] ${
+          <div
+            className={`relative mt-1 flex min-h-[44px] items-center rounded-md border px-3 py-2.5 shadow-sm transition-all duration-200 focus-within:outline focus-within:ring-2 focus-within:ring-red-500/50 focus-within:ring-offset-0 ${
               validationErrors.originCity
                 ? "border-red-600 bg-gray-800/50"
                 : formData.originCity.length >= 2
                 ? "border-green-600/50 bg-gray-800/50"
                 : "border-gray-700 bg-gray-800/50"
             }`}
-            placeholder="e.g. London, Mumbai, São Paulo"
-          />
-          {showOriginDropdown && (
-            <ul
-              ref={originListRef}
-              id="originCity-list"
-              role="listbox"
-              aria-label="Popular cities (optional)"
-              className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-md border border-gray-700 bg-gray-900 py-1 shadow-lg ring-1 ring-black/5"
+          >
+            {/* Ghost line: same baseline as input — transparent typed part + gray completion */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 flex items-center px-3 py-2.5 text-base leading-normal"
             >
-              <li className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-gray-500 border-b border-gray-800" aria-hidden="true">
-                {query.length < 2 ? "Worldwide cities — type to search" : "Matches — or type any city"}
-              </li>
-              {filteredCities.map((city, i) => (
-                <li
-                  key={city}
-                  id={`originCity-option-${i}`}
-                  role="option"
-                  aria-selected={originHighlightIndex === i}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    selectOriginCity(city);
-                  }}
-                  className={`cursor-pointer px-3 py-2 text-sm text-white transition-colors ${
-                    originHighlightIndex === i ? "bg-red-600/30 text-red-100" : "hover:bg-gray-800"
-                  }`}
-                >
-                  {city}
-                </li>
-              ))}
-            </ul>
+              <span className="whitespace-pre text-transparent">
+                {formData.originCity}
+              </span>
+              {showInlineSuggestion && completionSuffix && (
+                <span className="whitespace-pre text-gray-500" aria-live="polite">
+                  {completionSuffix}
+                </span>
+              )}
+            </div>
+            <input
+              ref={originInputRef}
+              type="text"
+              id="originCity"
+              required
+              minLength={2}
+              value={formData.originCity}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData({ ...formData, originCity: value });
+                validateField("originCity", value);
+              }}
+              onBlur={() => validateField("originCity", formData.originCity)}
+              onKeyDown={handleOriginKeyDown}
+              disabled={loading}
+              autoComplete="off"
+              aria-describedby="originCity-help originCity-error originCity-suggestion"
+              aria-invalid={validationErrors.originCity ? "true" : "false"}
+              aria-autocomplete="inline"
+              aria-controls={showInlineSuggestion ? "originCity-suggestion" : undefined}
+              className="relative z-10 w-full min-w-0 border-0 bg-transparent py-0 text-base leading-normal text-white placeholder-gray-500 outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="e.g. London, Mumbai, São Paulo"
+            />
+          </div>
+          {showInlineSuggestion && firstMatch && (
+            <p id="originCity-suggestion" className="sr-only" aria-live="polite">
+              Suggestion: {firstMatch}. Press Tab or Enter to accept.
+            </p>
           )}
           {validationErrors.originCity && (
             <p
@@ -539,7 +534,7 @@ export function TripForm({ onSubmit }: TripFormProps) {
           </button>
           {!isFormValid() && !loading && (
             <p className="mt-2 text-xs text-gray-500 text-center" role="status">
-              Please complete all fields correctly to continue
+              Fix the errors above to enable Generate Itinerary
             </p>
           )}
         </div>
