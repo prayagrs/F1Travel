@@ -22,6 +22,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* F1 form typography — less corporate, more sporty */
+.font-form {
+  font-family: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
 /* Screen reader only utility - hides visually but keeps accessible to screen readers */
 .sr-only {
   position: absolute;

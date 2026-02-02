@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { TripRequest, BudgetTier } from "@/domain/itinerary/types";
 import type { RaceWeekend } from "@/domain/races/types";
 import worldCities from "@/content/cities.json";
+import { getCountryFlag } from "@/ui/trip/countryFlags";
 import { Card } from "@/ui/components/Card";
 import { Skeleton, SkeletonInput, SkeletonSelect, SkeletonButton } from "@/ui/components/Skeleton";
 import { Spinner } from "@/ui/components/Spinner";
@@ -60,10 +61,14 @@ export function TripForm({ onSubmit }: TripFormProps) {
     budgetTier?: string;
   }>({});
 
+  // Race Weekend custom dropdown (flags + less clutter)
+  const [raceDropdownOpen, setRaceDropdownOpen] = useState(false);
+  const [raceHighlightIndex, setRaceHighlightIndex] = useState(-1);
+  const raceDropdownRef = useRef<HTMLDivElement>(null);
+  const raceListRef = useRef<HTMLUListElement>(null);
+
   // Origin city inline autocomplete (no dropdown)
   const originInputRef = useRef<HTMLInputElement>(null);
-  const originMeasureRef = useRef<HTMLSpanElement>(null);
-  const [completionLeftPx, setCompletionLeftPx] = useState(0);
 
   // World cities for inline suggestion (first match only; any city can still be typed)
   const citiesList: string[] = worldCities as string[];
@@ -177,6 +182,26 @@ export function TripForm({ onSubmit }: TripFormProps) {
     fetchRaces();
   }, []);
 
+  // Close race dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (raceDropdownRef.current && !raceDropdownRef.current.contains(e.target as Node)) {
+        setRaceDropdownOpen(false);
+      }
+    }
+    if (raceDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [raceDropdownOpen]);
+
+  // Scroll highlighted race option into view when using keyboard
+  useEffect(() => {
+    if (!raceDropdownOpen || raceHighlightIndex < 0 || !raceListRef.current) return;
+    const el = raceListRef.current.querySelector(`#race-option-${raceHighlightIndex}`);
+    el?.scrollIntoView({ block: "nearest" });
+  }, [raceDropdownOpen, raceHighlightIndex]);
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -249,12 +274,13 @@ export function TripForm({ onSubmit }: TripFormProps) {
   );
 
   return (
-    <Card className="border-gray-800/50 bg-gray-900/30 backdrop-blur-sm shadow-lg shadow-red-600/5 transition-all duration-200 hover:border-red-600/30 hover:shadow-red-600/10 px-4 py-4 sm:px-5 sm:py-5">
+    <Card className="font-form border-gray-800/50 bg-gray-900/30 backdrop-blur-sm shadow-lg shadow-red-600/5 transition-all duration-200 hover:border-red-600/30 hover:shadow-red-600/10 px-4 py-4 sm:px-5 sm:py-5">
       <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
-        {/* Race Weekend - First and most prominent */}
-        <div>
+        {/* Race Weekend - Custom dropdown with flags and clearer layout */}
+        <div ref={raceDropdownRef} className="relative">
           <label
-            htmlFor="raceId"
+            id="raceId-label"
+            htmlFor="raceId-button"
             className="block text-sm font-medium text-gray-300 mb-1"
           >
             Race Weekend
@@ -262,41 +288,135 @@ export function TripForm({ onSubmit }: TripFormProps) {
           <p className="text-xs text-gray-500 mb-2" id="raceId-help">
             Choose which F1 race weekend you want to attend
           </p>
-          <select
+          <input
+            type="hidden"
             id="raceId"
-            required
+            name="raceId"
             value={formData.raceId}
-            onChange={(e) => {
-              const value = e.target.value;
-              setFormData({ ...formData, raceId: value });
-              validateField("raceId", value);
-            }}
-            onBlur={() => validateField("raceId", formData.raceId)}
-            disabled={loading}
-            aria-describedby="raceId-help raceId-error"
+            required
             aria-invalid={validationErrors.raceId ? "true" : "false"}
-            className={`mt-1 block w-full rounded-md border px-3 py-2.5 text-white shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-600 min-h-[44px] ${
+          />
+          <button
+            type="button"
+            id="raceId-button"
+            aria-haspopup="listbox"
+            aria-expanded={raceDropdownOpen}
+            aria-labelledby="raceId-label"
+            aria-describedby="raceId-help raceId-error"
+            aria-controls="raceId-listbox"
+            aria-activedescendant={raceDropdownOpen && raceHighlightIndex >= 0 ? `race-option-${raceHighlightIndex}` : undefined}
+            disabled={loading}
+            onClick={() => {
+              setRaceDropdownOpen((open) => !open);
+              setRaceHighlightIndex(formData.raceId ? sortedRaces.findIndex((r) => r.id === formData.raceId) : 0);
+            }}
+            onKeyDown={(e) => {
+              if (!raceDropdownOpen) {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setRaceDropdownOpen(true);
+                  setRaceHighlightIndex(0);
+                }
+                return;
+              }
+              if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setRaceHighlightIndex((i) => (i < sortedRaces.length - 1 ? i + 1 : i));
+              } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setRaceHighlightIndex((i) => (i > 0 ? i - 1 : 0));
+              } else if (e.key === "Enter" && raceHighlightIndex >= 0 && sortedRaces[raceHighlightIndex]) {
+                e.preventDefault();
+                const race = sortedRaces[raceHighlightIndex];
+                setFormData((prev) => ({ ...prev, raceId: race.id }));
+                validateField("raceId", race.id);
+                setRaceDropdownOpen(false);
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                setRaceDropdownOpen(false);
+              }
+            }}
+            className={`mt-1 flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2.5 text-left text-white shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-600 min-h-[44px] touch-manipulation ${
               validationErrors.raceId
                 ? "border-red-600 bg-gray-800/50"
                 : formData.raceId
                 ? "border-green-600/50 bg-gray-800/50"
                 : "border-gray-700 bg-gray-800/50"
             }`}
-            style={{ colorScheme: 'dark' }}
           >
-            <option value="" className="bg-gray-800 text-white">Select a race...</option>
-            {sortedRaces.map((race) => (
-              <option key={race.id} value={race.id} className="bg-gray-800 text-white">
-                {formatRaceName(race.name)} • {formatRaceDate(race.raceDateISO)} • {race.city}, {race.country}
-              </option>
-            ))}
-          </select>
-          {validationErrors.raceId && (
-            <p
-              id="raceId-error"
-              className="mt-1 text-xs text-red-400"
-              role="alert"
+            {formData.raceId ? (
+              (() => {
+                const selected = sortedRaces.find((r) => r.id === formData.raceId);
+                return selected ? (
+                  <span className="flex items-center gap-2 truncate">
+                    <span className="shrink-0 text-lg leading-none" aria-hidden="true">
+                      {getCountryFlag(selected.country)}
+                    </span>
+                    <span className="truncate">
+                      {formatRaceName(selected.name)} · {formatRaceDate(selected.raceDateISO)}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-gray-500">Select a race...</span>
+                );
+              })()
+            ) : (
+              <span className="text-gray-500">Select a race...</span>
+            )}
+            <svg
+              className={`h-5 w-5 shrink-0 text-gray-400 transition-transform ${raceDropdownOpen ? "rotate-180" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
             >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {raceDropdownOpen && (
+            <ul
+              ref={raceListRef}
+              id="raceId-listbox"
+              role="listbox"
+              aria-labelledby="raceId-label"
+              className="absolute z-20 mt-1 max-h-[min(18rem,60vh)] w-full overflow-auto rounded-md border border-gray-700 bg-gray-900 py-1 shadow-xl ring-1 ring-black/20"
+            >
+              {sortedRaces.map((race, i) => (
+                <li
+                  key={race.id}
+                  id={`race-option-${i}`}
+                  role="option"
+                  aria-selected={formData.raceId === race.id}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setFormData((prev) => ({ ...prev, raceId: race.id }));
+                    validateField("raceId", race.id);
+                    setRaceDropdownOpen(false);
+                  }}
+                  onMouseEnter={() => setRaceHighlightIndex(i)}
+                  className={`flex cursor-pointer items-start gap-3 px-3 py-2.5 text-left transition-colors ${
+                    raceHighlightIndex === i
+                      ? "bg-red-600/20 text-white"
+                      : "text-gray-200 hover:bg-gray-800"
+                  }`}
+                >
+                  <span className="mt-0.5 shrink-0 text-xl leading-none" aria-hidden="true">
+                    {getCountryFlag(race.country)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-white">
+                      {formatRaceName(race.name)} · {formatRaceDate(race.raceDateISO)}
+                    </div>
+                    <div className="mt-0.5 text-xs text-gray-400">
+                      {race.city}, {race.country}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          {validationErrors.raceId && (
+            <p id="raceId-error" className="mt-1 text-xs text-red-400" role="alert">
               {validationErrors.raceId}
             </p>
           )}
