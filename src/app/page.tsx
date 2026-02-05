@@ -90,7 +90,7 @@ export default function Home() {
               </div>
               
               {/* Headline - Increased size for better hierarchy */}
-              <h1 className="text-5xl font-bold leading-tight tracking-tight text-white sm:text-6xl lg:text-7xl">
+              <h1 className="font-heading text-5xl font-bold leading-tight tracking-tight text-white sm:text-6xl lg:text-7xl">
                 YOUR F1 WEEKEND.
                 <br />
                 <span className="text-red-600">PLANNED.</span>

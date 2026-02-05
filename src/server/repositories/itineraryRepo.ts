@@ -19,6 +19,7 @@ export type ItinerarySummary = {
   originCity: string;
   raceId: string;
   raceDateISO: string | null;
+  country: string | null;
   durationDays: number;
   budgetTier: string;
   createdAt: Date;
@@ -112,18 +113,52 @@ export class ItineraryRepository {
 
     return itineraries.map((row) => {
       const result = row.resultJson as ItineraryResult | null;
-      const raceDateISO =
-        result?.race?.raceDateISO ?? null;
+      const raceDateISO = result?.race?.raceDateISO ?? null;
+      const country = result?.race?.country ?? null;
       return {
         id: row.id,
         originCity: row.originCity,
         raceId: row.raceId,
         raceDateISO,
+        country,
         durationDays: row.durationDays,
         budgetTier: row.budgetTier,
         createdAt: row.createdAt,
       };
     });
+  }
+
+  /**
+   * Deletes an itinerary if the user owns it.
+   * @returns true if deleted, false if not found or not owned
+   */
+  async deleteItinerary(userId: string, id: string): Promise<boolean> {
+    const result = await prisma.itinerary.deleteMany({
+      where: { id, userId },
+    });
+    return result.count > 0;
+  }
+
+  /**
+   * Duplicates an itinerary for the user. Creates a new record with the same
+   * content but a new ID and timestamp.
+   * @returns The new itinerary ID, or null if source not found
+   */
+  async duplicateItinerary(userId: string, id: string): Promise<string | null> {
+    const existing = await this.getItineraryById(userId, id);
+    if (!existing) return null;
+
+    const newId = await this.createItinerary(
+      userId,
+      {
+        originCity: existing.originCity,
+        raceId: existing.raceId,
+        durationDays: existing.durationDays,
+        budgetTier: existing.budgetTier as TripRequest["budgetTier"],
+      },
+      existing.resultJson
+    );
+    return newId;
   }
 }
 

@@ -80,14 +80,14 @@ export default async function TripPage() {
         className="pointer-events-none absolute inset-0 animate-racing-sweep"
         style={{
           background:
-            "radial-gradient(circle, rgba(220, 38, 38, 0.2) 0%, transparent 70%), linear-gradient(135deg, rgba(220, 38, 38, 0.25) 0%, transparent 50%, rgba(59, 130, 246, 0.1) 100%)",
+            "radial-gradient(circle, rgba(220, 38, 38, 0.22) 0%, transparent 70%), linear-gradient(135deg, rgba(220, 38, 38, 0.27) 0%, transparent 50%, rgba(59, 130, 246, 0.1) 100%)",
         }}
         aria-hidden="true"
       />
       
       {/* Animated gradient sweep - Creates motion */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.08] animate-gradient-sweep"
+        className="pointer-events-none absolute inset-0 opacity-[0.10] animate-gradient-sweep"
         style={{
           background:
             "linear-gradient(135deg, rgba(220, 38, 38, 0.2) 0%, transparent 40%, rgba(107, 114, 128, 0.1) 60%, transparent 100%)",
@@ -97,6 +97,15 @@ export default async function TripPage() {
       
       {/* Speed Lines Effect - Dynamic racing motion */}
       <div className="pointer-events-none absolute inset-0 speed-lines opacity-30" aria-hidden="true" />
+      
+      {/* Speed Blur Effect - Racing motion streaks (matches Home) */}
+      <div
+        className="pointer-events-none absolute inset-0 animate-speed-blur opacity-[0.12]"
+        style={{
+          background: "linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.2), transparent)",
+        }}
+        aria-hidden="true"
+      />
       
       {/* Animated red accent dots with F1 pulse */}
       <div className="pointer-events-none absolute top-20 right-20 h-2.5 w-2.5 rounded-full bg-red-600 animate-f1-pulse shadow-lg shadow-red-600/50" aria-hidden="true" />
@@ -113,7 +122,7 @@ export default async function TripPage() {
         </div>
         
         {/* Heading - Proportional size for form page */}
-        <h1 className="mb-4 text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
+        <h1 className="font-heading mb-4 text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
           Create Your F1 Trip
           <br />
           <span className="text-red-600">Itinerary.</span>
