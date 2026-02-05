@@ -18,6 +18,7 @@ export type ItinerarySummary = {
   id: string;
   originCity: string;
   raceId: string;
+  raceDateISO: string | null;
   durationDays: number;
   budgetTier: string;
   createdAt: Date;
@@ -102,13 +103,27 @@ export class ItineraryRepository {
         durationDays: true,
         budgetTier: true,
         createdAt: true,
+        resultJson: true,
       },
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    return itineraries;
+    return itineraries.map((row) => {
+      const result = row.resultJson as ItineraryResult | null;
+      const raceDateISO =
+        result?.race?.raceDateISO ?? null;
+      return {
+        id: row.id,
+        originCity: row.originCity,
+        raceId: row.raceId,
+        raceDateISO,
+        durationDays: row.durationDays,
+        budgetTier: row.budgetTier,
+        createdAt: row.createdAt,
+      };
+    });
   }
 }
 
