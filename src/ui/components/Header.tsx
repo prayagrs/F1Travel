@@ -87,10 +87,11 @@ export function Header() {
             <F1TravelLogo />
             <span>F1 Travel</span>
           </Link>
-          <div className="flex items-center gap-1 sm:gap-6">
+          {/* Nav link padding: px-4 py-2.5 (16px/10px) — standard for header and tab-style links */}
+          <div className="flex items-center gap-1 sm:gap-2">
             <Link
               href="/"
-              className={`relative flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-2 text-sm transition-colors hover:bg-white/5 sm:min-h-0 sm:min-w-0 sm:flex-row sm:gap-1.5 sm:rounded-none sm:px-0 ${
+              className={`relative flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-white/5 sm:min-h-0 sm:min-w-0 sm:flex-row sm:gap-1.5 sm:rounded-md sm:px-4 sm:py-2.5 ${
                 isActive("/") ? "font-medium text-white" : "text-gray-400"
               }`}
               aria-current={isActive("/") ? "page" : undefined}
@@ -106,7 +107,7 @@ export function Header() {
             </Link>
             <Link
               href="/trip"
-              className={`relative flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-2 text-sm transition-colors hover:bg-white/5 sm:min-h-0 sm:min-w-0 sm:flex-row sm:gap-1.5 sm:rounded-none sm:px-0 ${
+              className={`relative flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-white/5 sm:min-h-0 sm:min-w-0 sm:flex-row sm:gap-1.5 sm:rounded-md sm:px-4 sm:py-2.5 ${
                 isActive("/trip") ? "font-medium text-white" : "text-gray-400"
               }`}
               aria-current={isActive("/trip") ? "page" : undefined}
@@ -123,7 +124,7 @@ export function Header() {
             {session && (
               <Link
                 href="/account"
-                className={`relative flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-2 text-sm transition-colors hover:bg-white/5 sm:min-h-0 sm:min-w-0 sm:flex-row sm:gap-1.5 sm:rounded-none sm:px-0 ${
+                className={`relative flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-white/5 sm:min-h-0 sm:min-w-0 sm:flex-row sm:gap-1.5 sm:rounded-md sm:px-4 sm:py-2.5 ${
                   isAccountActive ? "font-medium text-white" : "text-gray-400"
                 }`}
                 aria-current={isAccountActive ? "page" : undefined}

@@ -16,7 +16,7 @@ export function AccountTabs() {
     <div className="mb-8 flex gap-6 border-b border-gray-800/50 pb-4">
       <Link
         href="/account"
-        className={`font-heading relative flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-80 ${
+        className={`font-heading relative flex items-center gap-1.5 rounded-md px-4 py-2.5 text-sm font-medium transition-opacity hover:opacity-80 ${
           isItineraries ? "text-white" : "text-gray-400"
         }`}
       >

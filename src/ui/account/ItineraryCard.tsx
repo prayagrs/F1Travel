@@ -20,14 +20,6 @@ type ItineraryCardProps = {
   staggerDelay?: number;
 };
 
-function CopyIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-    </svg>
-  );
-}
-
 function TrashIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -37,12 +29,11 @@ function TrashIcon({ className }: { className?: string }) {
 }
 
 /**
- * Itinerary card with view link, duplicate, and delete actions.
- * Primary tap opens itinerary; secondary actions in a button group.
+ * Itinerary card with view link and delete action.
+ * Primary tap opens itinerary; delete in a button (Share/Copy may be added later).
  */
 export function ItineraryCard({ itinerary, staggerDelay }: ItineraryCardProps) {
   const router = useRouter();
-  const [isDuplicating, setIsDuplicating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
@@ -67,30 +58,10 @@ export function ItineraryCard({ itinerary, staggerDelay }: ItineraryCardProps) {
     };
   }, [showDeleteModal]);
 
-  async function handleDuplicate(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isDuplicating || isDeleting) return;
-    setIsDuplicating(true);
-    try {
-      const res = await fetch(`/api/itineraries/${itinerary.id}/duplicate`, { method: "POST" });
-      const data = await res.json();
-      if (res.ok && data.id) {
-        router.push(`/itinerary/${data.id}`);
-      } else {
-        router.refresh();
-      }
-    } catch {
-      router.refresh();
-    } finally {
-      setIsDuplicating(false);
-    }
-  }
-
   function openDeleteModal(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    if (isDuplicating || isDeleting) return;
+    if (isDeleting) return;
     setShowDeleteModal(true);
   }
 
@@ -151,32 +122,27 @@ export function ItineraryCard({ itinerary, staggerDelay }: ItineraryCardProps) {
             className="ml-2 flex gap-1"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              type="button"
-              onClick={handleDuplicate}
-              disabled={isDuplicating || isDeleting}
-              aria-label="Duplicate itinerary"
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-gray-400 transition-transform hover:bg-gray-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 active:scale-95 disabled:opacity-50"
-            >
-              {isDuplicating ? (
-                <Spinner size="sm" />
-              ) : (
-                <CopyIcon className="h-5 w-5" />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={openDeleteModal}
-              disabled={isDuplicating || isDeleting}
-              aria-label="Delete itinerary"
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-gray-400 transition-transform hover:bg-red-600/20 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 active:scale-95 disabled:opacity-50"
-            >
-              {isDeleting ? (
-                <Spinner size="sm" />
-              ) : (
-                <TrashIcon className="h-5 w-5" />
-              )}
-            </button>
+            <span className="relative group">
+              <span
+                className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-gray-200 opacity-0 shadow-lg ring-1 ring-gray-700 transition-opacity duration-150 group-hover:opacity-100"
+                role="tooltip"
+              >
+                Delete itinerary
+              </span>
+              <button
+                type="button"
+                onClick={openDeleteModal}
+                disabled={isDeleting}
+                aria-label="Delete itinerary"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-gray-400 transition-[transform,color,background-color] duration-150 hover:bg-red-600/25 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 active:scale-95 disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <Spinner size="sm" />
+                ) : (
+                  <TrashIcon className="h-5 w-5" />
+                )}
+              </button>
+            </span>
           </div>
         </div>
       </div>
