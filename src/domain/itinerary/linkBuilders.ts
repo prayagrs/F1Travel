@@ -81,15 +81,25 @@ export function buildStaysLinks(
 }
 
 /**
- * Builds deep links for tickets (official F1 tickets + circuit override if provided)
+ * Builds deep links for tickets (official F1 tickets + other sources + circuit search).
  */
-export function buildTicketsLinks(race: { officialTicketsUrl?: string; circuit: string }): ProviderLink[] {
+export function buildTicketsLinks(race: {
+  officialTicketsUrl?: string;
+  otherTicketsUrl?: string;
+  circuit: string;
+}): ProviderLink[] {
   const links: ProviderLink[] = [];
 
   if (race.officialTicketsUrl) {
     links.push({
       label: "Official F1 Tickets",
       href: race.officialTicketsUrl,
+    });
+  }
+  if (race.otherTicketsUrl) {
+    links.push({
+      label: "Other ticket sources",
+      href: race.otherTicketsUrl,
     });
   }
 

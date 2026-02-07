@@ -1,14 +1,60 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { ItineraryResult } from "@/domain/itinerary/types";
 import { Card } from "@/ui/components/Card";
-import { Section } from "@/ui/components/Section";
 import { DateOptionTabs } from "@/ui/components/DateOptionTabs";
+import { getCircuitPath } from "@/ui/components/circuitPaths";
+import { getCircuitSVGConfig } from "@/ui/components/circuitSVGLoader";
+import { getCircuitSvgPath } from "@/ui/components/circuitSvgFiles";
 
 type ItineraryViewProps = {
   result: ItineraryResult;
 };
+
+/** Circuit SVG for the race details card (right side). Uses same assets as CircuitIcon. */
+function RaceCircuitSvg({ raceId }: { raceId: string }) {
+  const svgFileUrl = getCircuitSvgPath(raceId);
+  const svgConfig = getCircuitSVGConfig(raceId);
+  const circuitPath = getCircuitPath(raceId);
+  const viewBox = svgConfig?.viewBox ?? "0 0 32 32";
+  const strokeWidth = svgConfig?.strokeWidth ?? "1.5";
+
+  const size = 112; // w-28 h-28
+
+  if (svgFileUrl) {
+    return (
+      <img
+        src={svgFileUrl}
+        alt=""
+        width={size}
+        height={size}
+        className="h-28 w-28 object-contain opacity-60 [filter:invert(1)_brightness(0.9)]"
+      />
+    );
+  }
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={viewBox}
+      fill="none"
+      className="text-gray-500"
+      aria-hidden
+    >
+      <path
+        d={circuitPath}
+        stroke="currentColor"
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
 
 /**
  * Presentational component that renders an ItineraryResult.
@@ -22,119 +68,157 @@ export function ItineraryView({ result }: ItineraryViewProps) {
 
   return (
     <div className="space-y-8">
-      {/* Disclaimers */}
-      <Card className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
-        <p className="text-sm text-amber-800 dark:text-amber-300">
+      {/* Breadcrumb: minimal, arrow separator, F1 typography and theme */}
+      <nav aria-label="Breadcrumb" className="font-heading text-base">
+        <ol className="flex flex-wrap items-center gap-x-2">
+          <li>
+            <Link
+              href="/account"
+              className="text-gray-300 transition-colors hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-[#0B0C0E] rounded"
+            >
+              My Itineraries
+            </Link>
+          </li>
+          <li aria-hidden="true" className="select-none text-gray-500">→</li>
+          <li className="font-semibold text-white" aria-current="page">
+            {result.race.name}
+          </li>
+        </ol>
+      </nav>
+
+      {/* Disclaimers — F1 dark theme */}
+      <Card className="border-amber-800/60 bg-amber-900/20 text-amber-200">
+        <p className="text-sm">
           <strong>Disclaimer:</strong> All links open external websites. Prices and availability
           may change. Please verify all information with providers before booking.
         </p>
       </Card>
 
-      {/* Race Info Header */}
-      <Card>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-          {result.race.name}
-        </h1>
-        <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
-          {result.race.circuit}, {result.race.city}, {result.race.country}
-        </p>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-500">
-          Race Date: {result.race.raceDateISO} | From: {result.request.originCity} | 
-          Duration: {result.request.durationDays} days | Budget: {result.request.budgetTier}
-        </p>
+      {/* Race Info Header — F1 dark theme, font-heading, circuit SVG on right */}
+      <Card className="border-gray-800 bg-gray-900/30">
+        <div className="flex items-start justify-between gap-6">
+          <div className="min-w-0 flex-1">
+            <h1 className="font-heading text-3xl font-bold text-white">
+              {result.race.name}
+            </h1>
+            <p className="mt-2 text-lg text-gray-300">
+              {result.race.circuit}, {result.race.city}, {result.race.country}
+            </p>
+            <p className="mt-1 text-sm text-gray-400">
+              Race Date: {result.race.raceDateISO} | From: {result.request.originCity} | 
+              Duration: {result.request.durationDays} days | Budget: {result.request.budgetTier}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center justify-center" aria-hidden>
+            <RaceCircuitSvg raceId={result.race.id} />
+          </div>
+        </div>
       </Card>
 
-      {/* Date Options Tabs */}
-      <Card>
+      {/* One card: Option tabs + all booking sections with dividers (joined, less scrolling) */}
+      <Card className="border-gray-800 bg-gray-900/30 overflow-hidden">
         <DateOptionTabs
           options={result.dateOptions}
           selectedKey={selectedOption}
           onSelect={setSelectedOption}
         />
-      </Card>
-
-      {/* Flights Section */}
-      {selectedFlights && (
-        <Section title={selectedFlights.title}>
-          <Card>
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-3">
-                {selectedFlights.links.map((link, index) => (
-                  <a
-                    key={index}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
-                    {link.label}
-                  </a>
-                ))}
-              </div>
-              {selectedFlights.notes && selectedFlights.notes.length > 0 && (
-                <ul className="mt-4 space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                  {selectedFlights.notes.map((note, index) => (
-                    <li key={index}>• {note}</li>
-                  ))}
-                </ul>
-              )}
+        <hr className="border-t border-gray-700/80 my-0" aria-hidden />
+        {/* Race Tickets */}
+        <div className="py-5">
+          <h2 className="font-heading text-lg font-semibold text-white mb-3" id="section-tickets">
+            {result.tickets.title}
+          </h2>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-3">
+              {result.tickets.links.map((link, index) => (
+                <a
+                  key={index}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 min-h-[44px] items-center justify-center"
+                >
+                  {link.label}
+                </a>
+              ))}
             </div>
-          </Card>
-        </Section>
-      )}
-
-      {/* Stays Section */}
-      {selectedStays && (
-        <Section title={selectedStays.title}>
-          <Card>
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-3">
-                {selectedStays.links.map((link, index) => (
-                  <a
-                    key={index}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                  >
-                    {link.label}
-                  </a>
-                ))}
-              </div>
-              {selectedStays.notes && selectedStays.notes.length > 0 && (
-                <ul className="mt-4 space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                  {selectedStays.notes.map((note, index) => (
-                    <li key={index}>• {note}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </Card>
-        </Section>
-      )}
-
-      {/* Tickets Section */}
-      <Section title={result.tickets.title}>
-        <Card>
-          <div className="flex flex-wrap gap-3">
-            {result.tickets.links.map((link, index) => (
-              <a
-                key={index}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-              >
-                {link.label}
-              </a>
-            ))}
+            <p className="text-sm text-gray-400">
+              Official and reseller prices vary by grandstand and circuit; expect roughly €200–1500+ for race weekend. Check each link for current availability and pricing.
+            </p>
           </div>
-        </Card>
-      </Section>
+        </div>
 
-      {/* Experiences Section */}
-      <Section title={result.experiences.title}>
-        <Card>
+        {selectedFlights && (
+          <>
+            <hr className="border-t border-gray-700/80 my-0" aria-hidden />
+            <div className="py-5" id="section-flights">
+              <h2 className="font-heading text-lg font-semibold text-white mb-3">
+                {selectedFlights.title}
+              </h2>
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-3">
+                  {selectedFlights.links.map((link, index) => (
+                    <a
+                      key={index}
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center rounded-md border border-gray-600 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:border-red-600/50 hover:bg-red-600/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 min-h-[44px] items-center justify-center"
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+                {selectedFlights.notes && selectedFlights.notes.length > 0 && (
+                  <ul className="space-y-1 text-sm text-gray-400">
+                    {selectedFlights.notes.map((note, index) => (
+                      <li key={index}>• {note}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {selectedStays && (
+          <>
+            <hr className="border-t border-gray-700/80 my-0" aria-hidden />
+            <div className="py-5" id="section-stays">
+              <h2 className="font-heading text-lg font-semibold text-white mb-3">
+                {selectedStays.title}
+              </h2>
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-3">
+                  {selectedStays.links.map((link, index) => (
+                    <a
+                      key={index}
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center rounded-md border border-gray-600 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:border-red-600/50 hover:bg-red-600/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 min-h-[44px] items-center justify-center"
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+                {selectedStays.notes && selectedStays.notes.length > 0 && (
+                  <ul className="space-y-1 text-sm text-gray-400">
+                    {selectedStays.notes.map((note, index) => (
+                      <li key={index}>• {note}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        <hr className="border-t border-gray-700/80 my-0" aria-hidden />
+        <div className="py-5 last:pb-0" id="section-experiences">
+          <h2 className="font-heading text-lg font-semibold text-white mb-3">
+            {result.experiences.title}
+          </h2>
           <div className="flex flex-wrap gap-3">
             {result.experiences.links.map((link, index) => (
               <a
@@ -142,14 +226,14 @@ export function ItineraryView({ result }: ItineraryViewProps) {
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                className="inline-flex items-center rounded-md border border-gray-600 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:border-red-600/50 hover:bg-red-600/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 min-h-[44px] items-center justify-center"
               >
                 {link.label}
               </a>
             ))}
           </div>
-        </Card>
-      </Section>
+        </div>
+      </Card>
     </div>
   );
 }

@@ -10,5 +10,8 @@ export type RaceWeekend = {
   city: string;
   country: string;
   raceDateISO: string;
+  /** Official F1 ticket purchase URL (from tickets.formula1.com). */
   officialTicketsUrl?: string;
+  /** Other ticket sources (promoter/circuit URLs). */
+  otherTicketsUrl?: string;
 };

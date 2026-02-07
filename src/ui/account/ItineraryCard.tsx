@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card } from "@/ui/components/Card";
@@ -36,7 +37,22 @@ export function ItineraryCard({ itinerary, staggerDelay }: ItineraryCardProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
+
+  const updateTooltipPos = useCallback(() => {
+    const el = deleteButtonRef.current;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top });
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (showTooltip) updateTooltipPos();
+  }, [showTooltip, updateTooltipPos]);
 
   useEffect(() => {
     if (showDeleteModal) {
@@ -122,27 +138,48 @@ export function ItineraryCard({ itinerary, staggerDelay }: ItineraryCardProps) {
             className="ml-2 flex gap-1"
             onClick={(e) => e.stopPropagation()}
           >
-            <span className="relative group">
-              <span
-                className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-gray-200 opacity-0 shadow-lg ring-1 ring-gray-700 transition-opacity duration-150 group-hover:opacity-100"
-                role="tooltip"
-              >
-                Delete itinerary
-              </span>
-              <button
-                type="button"
-                onClick={openDeleteModal}
-                disabled={isDeleting}
-                aria-label="Delete itinerary"
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-gray-400 transition-[transform,color,background-color] duration-150 hover:bg-red-600/25 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 active:scale-95 disabled:opacity-50"
-              >
-                {isDeleting ? (
-                  <Spinner size="sm" />
-                ) : (
-                  <TrashIcon className="h-5 w-5" />
-                )}
-              </button>
-            </span>
+            {typeof document !== "undefined" && showTooltip
+              ? createPortal(
+                  <div
+                    className="pointer-events-none fixed z-[9999] -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md border border-red-500/30 bg-gray-900 px-3 py-2 text-sm font-semibold text-white shadow-xl shadow-black/50 ring-1 ring-gray-700"
+                    style={{ left: tooltipPos.x, top: tooltipPos.y - 8 }}
+                    role="tooltip"
+                    id={`delete-tooltip-${itinerary.id}`}
+                  >
+                    Delete itinerary
+                  </div>,
+                  document.body
+                )
+              : null}
+            <button
+              ref={deleteButtonRef}
+              type="button"
+              onClick={openDeleteModal}
+              disabled={isDeleting}
+              aria-label="Delete itinerary"
+              aria-describedby={showTooltip ? `delete-tooltip-${itinerary.id}` : undefined}
+              onMouseEnter={() => {
+                if (!isDeleting) {
+                  setShowTooltip(true);
+                  updateTooltipPos();
+                }
+              }}
+              onMouseLeave={() => setShowTooltip(false)}
+              onFocus={() => {
+                if (!isDeleting) {
+                  setShowTooltip(true);
+                  updateTooltipPos();
+                }
+              }}
+              onBlur={() => setShowTooltip(false)}
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-gray-400 transition-[transform,color,background-color] duration-150 hover:bg-red-600/25 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 active:scale-95 disabled:opacity-50"
+            >
+              {isDeleting ? (
+                <Spinner size="sm" />
+              ) : (
+                <TrashIcon className="h-5 w-5" />
+              )}
+            </button>
           </div>
         </div>
       </div>

@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+id_ed25519.pub
+ps_authy
 
 # debug and logs
 *.log
