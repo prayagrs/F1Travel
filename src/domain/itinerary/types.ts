@@ -1,4 +1,4 @@
-import type { RaceWeekend } from "../races/types";
+import type { RaceWeekend, TicketOption } from "../races/types";
 
 export type BudgetTier = "$" | "$$" | "$$$";
 
@@ -27,12 +27,16 @@ export type SectionLinks = {
   notes?: string[];
 };
 
+export type TicketsSection = SectionLinks & {
+  options?: TicketOption[];
+};
+
 export type ItineraryResult = {
   request: TripRequest;
   race: RaceWeekend;
   dateOptions: DateOption[];
   flightsByOption: Record<string, SectionLinks>;
   staysByOption: Record<string, SectionLinks>;
-  tickets: SectionLinks;
+  tickets: TicketsSection;
   experiences: SectionLinks;
 };

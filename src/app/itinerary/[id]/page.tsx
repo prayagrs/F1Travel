@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/server/auth/session";
+
+export const dynamic = "force-dynamic";
+
 import { itineraryRepo } from "@/server/repositories/itineraryRepo";
+import { raceRepo } from "@/server/repositories/raceRepo";
+import { buildTicketsSection } from "@/domain/itinerary/linkBuilders";
 import { ItineraryView } from "@/ui/trip/ItineraryView";
 import { Card } from "@/ui/components/Card";
 
@@ -11,6 +16,7 @@ type ItineraryPageProps = {
 /**
  * Itinerary detail page. Requires session.
  * Fetches itinerary via internal server call (using repo directly since server component).
+ * Merges live ticket data at view time so existing itineraries show current ticket options.
  * Renders ItineraryView with date option tabs and sections.
  */
 export default async function ItineraryPage({ params }: ItineraryPageProps) {
@@ -40,5 +46,20 @@ export default async function ItineraryPage({ params }: ItineraryPageProps) {
     );
   }
 
-  return <ItineraryView result={itinerary.resultJson} />;
+  const resultJson = itinerary.resultJson;
+
+  // Merge live tickets at view time so existing itineraries see current ticket options
+  const yearRaw = resultJson.race?.raceDateISO
+    ? new Date(resultJson.race.raceDateISO).getFullYear()
+    : 2026;
+  const year = Number.isNaN(yearRaw) ? 2026 : yearRaw;
+  const raceId = resultJson.request?.raceId ?? itinerary.raceId;
+  const currentRace = raceRepo.getRaceById(year, raceId);
+  const tickets = currentRace
+    ? buildTicketsSection(currentRace)
+    : resultJson.tickets;
+
+  const result = { ...resultJson, tickets };
+
+  return <ItineraryView result={result} />;
 }

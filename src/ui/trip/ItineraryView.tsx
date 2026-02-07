@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ItineraryResult } from "@/domain/itinerary/types";
 import { Card } from "@/ui/components/Card";
 import { DateOptionTabs } from "@/ui/components/DateOptionTabs";
+import { TicketOptionCard } from "@/ui/components/TicketOptionCard";
 import { getCircuitPath } from "@/ui/components/circuitPaths";
 import { getCircuitSVGConfig } from "@/ui/components/circuitSVGLoader";
 import { getCircuitSvgPath } from "@/ui/components/circuitSvgFiles";
@@ -128,24 +129,35 @@ export function ItineraryView({ result }: ItineraryViewProps) {
           <h2 className="font-heading text-lg font-semibold text-white mb-3" id="section-tickets">
             {result.tickets.title}
           </h2>
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-3">
-              {result.tickets.links.map((link, index) => (
-                <a
-                  key={index}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 min-h-[44px] items-center justify-center"
-                >
-                  {link.label}
-                </a>
+          {result.tickets.options && result.tickets.options.length > 0 ? (
+            <div className="space-y-4">
+              {result.tickets.options.map((option, index) => (
+                <TicketOptionCard key={index} option={option} />
               ))}
+              <p className="text-sm text-gray-400">
+                Prices shown are indicative—verify with provider. Official and reseller prices vary by grandstand and circuit.
+              </p>
             </div>
-            <p className="text-sm text-gray-400">
-              Official and reseller prices vary by grandstand and circuit; expect roughly €200–1500+ for race weekend. Check each link for current availability and pricing.
-            </p>
-          </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-3">
+                {result.tickets.links.map((link, index) => (
+                  <a
+                    key={index}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 min-h-[44px] items-center justify-center"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+              <p className="text-sm text-gray-400">
+                Official and reseller prices vary by grandstand and circuit; expect roughly €200–1500+ for race weekend. Check each link for current availability and pricing.
+              </p>
+            </div>
+          )}
         </div>
 
         {selectedFlights && (

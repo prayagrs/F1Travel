@@ -167,7 +167,7 @@ export function Header() {
           ) : (
             <button
               type="button"
-              onClick={() => signIn("google")}
+              onClick={() => signIn("google", { prompt: "select_account" })}
               className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-transform hover:bg-red-700 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#14171C] min-h-[44px]"
             >
               Sign in

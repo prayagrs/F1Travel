@@ -1,4 +1,4 @@
-import type { BudgetTier, ProviderLink, TripRequest, DateOption } from "./types";
+import type { BudgetTier, ProviderLink, TripRequest, DateOption, TicketsSection } from "./types";
 import type { RaceWeekend } from "../races/types";
 
 /**
@@ -113,6 +113,18 @@ export function buildTicketsLinks(race: {
   });
 
   return links;
+}
+
+/**
+ * Builds the tickets section with optional curated options (card display) and fallback links.
+ */
+export function buildTicketsSection(race: RaceWeekend): TicketsSection {
+  const links = buildTicketsLinks(race);
+  return {
+    title: "Race Tickets",
+    links,
+    options: race.ticketOptions,
+  };
 }
 
 /**

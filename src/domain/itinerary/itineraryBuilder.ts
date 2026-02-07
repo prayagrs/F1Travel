@@ -4,7 +4,7 @@ import { generateDateOptions } from "./dateOptions";
 import {
   buildFlightsLinks,
   buildStaysLinks,
-  buildTicketsLinks,
+  buildTicketsSection,
   buildExperiencesLinks,
   getNeighborhoodTipsByBudget,
   getFlightNotesByBudget,
@@ -44,11 +44,7 @@ export function buildItinerary(
   }
 
   // Build tickets section (constant, not per date option)
-  const ticketLinks = buildTicketsLinks(race);
-  const tickets = {
-    title: "Race Tickets",
-    links: ticketLinks,
-  };
+  const tickets = buildTicketsSection(race);
 
   // Build experiences section (constant, not per date option)
   const experienceLinks = buildExperiencesLinks(race);
