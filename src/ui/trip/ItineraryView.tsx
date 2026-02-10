@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { ItineraryResult } from "@/domain/itinerary/types";
+import { getFlightPriceExpectationLine } from "@/domain/itinerary/linkBuilders";
 import { Card } from "@/ui/components/Card";
 import { DateOptionTabs } from "@/ui/components/DateOptionTabs";
+import { FlightSearchCard } from "@/ui/components/FlightSearchCard";
 import { TicketOptionCard } from "@/ui/components/TicketOptionCard";
 import { getCircuitPath } from "@/ui/components/circuitPaths";
 import { getCircuitSVGConfig } from "@/ui/components/circuitSVGLoader";
@@ -160,38 +162,33 @@ export function ItineraryView({ result }: ItineraryViewProps) {
           )}
         </div>
 
-        {selectedFlights && (
-          <>
-            <hr className="border-t border-gray-700/80 my-0" aria-hidden />
-            <div className="py-5" id="section-flights">
-              <h2 className="font-heading text-lg font-semibold text-white mb-3">
-                {selectedFlights.title}
-              </h2>
-              <div className="space-y-4">
-                <div className="flex flex-wrap gap-3">
-                  {selectedFlights.links.map((link, index) => (
-                    <a
-                      key={index}
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center rounded-md border border-gray-600 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:border-red-600/50 hover:bg-red-600/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 min-h-[44px] items-center justify-center"
-                    >
-                      {link.label}
-                    </a>
+        {selectedFlights && (() => {
+          const selectedDateOption = result.dateOptions.find((o) => o.key === selectedOption);
+          const flightSubtitle = selectedDateOption
+            ? `From ${result.request.originCity} to ${result.race.city} · ${selectedDateOption.label}`
+            : `From ${result.request.originCity} to ${result.race.city}`;
+          const flightNotesWithPrice = [getFlightPriceExpectationLine()];
+          return (
+            <>
+              <hr className="border-t border-gray-700/80 my-0" aria-hidden />
+              <div className="py-5" id="section-flights">
+                <h2 className="font-heading text-lg font-semibold text-white mb-3">
+                  {selectedFlights.title}
+                </h2>
+                <div className="space-y-4">
+                  {selectedFlights.links.map((link) => (
+                    <FlightSearchCard
+                      key={link.label}
+                      link={link}
+                      subtitle={flightSubtitle}
+                      notes={flightNotesWithPrice}
+                    />
                   ))}
                 </div>
-                {selectedFlights.notes && selectedFlights.notes.length > 0 && (
-                  <ul className="space-y-1 text-sm text-gray-400">
-                    {selectedFlights.notes.map((note, index) => (
-                      <li key={index}>• {note}</li>
-                    ))}
-                  </ul>
-                )}
               </div>
-            </div>
-          </>
-        )}
+            </>
+          );
+        })()}
 
         {selectedStays && (
           <>

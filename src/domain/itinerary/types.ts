@@ -19,6 +19,8 @@ export type DateOption = {
 export type ProviderLink = {
   label: string;
   href: string;
+  /** Optional path to provider logo (e.g. /logos/google-flights.svg). Used by Flights section. */
+  logo?: string;
 };
 
 export type SectionLinks = {

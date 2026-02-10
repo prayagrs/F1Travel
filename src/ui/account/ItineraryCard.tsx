@@ -104,7 +104,7 @@ export function ItineraryCard({ itinerary, staggerDelay }: ItineraryCardProps) {
 
   return (
     <Card
-      className="animate-fade-in cursor-pointer border-gray-800/50 bg-gray-900/30 backdrop-blur-sm transition-all duration-200 hover:scale-[1.01] hover:border-red-600/50 hover:shadow-md hover:shadow-red-600/10"
+      className="animate-fade-in cursor-pointer rounded-lg border border-gray-700 bg-gray-800/50 p-4 transition-colors hover:border-gray-600 hover:shadow-md"
       style={staggerDelay != null ? { animationDelay: `${staggerDelay}ms` } : undefined}
     >
       <div className="flex items-start justify-between gap-4">

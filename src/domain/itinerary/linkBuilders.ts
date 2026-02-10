@@ -2,37 +2,222 @@ import type { BudgetTier, ProviderLink, TripRequest, DateOption, TicketsSection 
 import type { RaceWeekend } from "../races/types";
 
 /**
- * Builds deep links for flights (Google Flights + Skyscanner)
+ * Builds deep links for flights (Google Flights, Skyscanner, Kayak).
+ * Returns 3–4 provider options with optional logo paths.
  */
+/** Convert YYYY-MM-DD to YYMMDD for Skyscanner path. */
+function toYYMMDD(iso: string): string {
+  if (!iso || iso.length < 10) return "";
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return `${y.slice(2)}${m}${d}`;
+}
+
+/** Slug for path: lowercase, spaces to hyphens, strip non-alphanumeric. */
+function toPathSlug(s: string): string {
+  return encodeURIComponent(String(s).trim().toLowerCase().replace(/\s+/g, "-"));
+}
+
+/** Normalize city name for IATA lookup: trim, lowercase, collapse spaces. */
+function normalizeCity(s: string): string {
+  return String(s).trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/** Common origin cities → IATA (nearest major airport). Used for Skyscanner/Kayak deep links. */
+const ORIGIN_CITY_TO_IATA: Record<string, string> = {
+  "san francisco": "SFO",
+  "new york": "JFK",
+  "new york city": "JFK",
+  "los angeles": "LAX",
+  "london": "LHR",
+  "chicago": "ORD",
+  "miami": "MIA",
+  "austin": "AUS",
+  "las vegas": "LAS",
+  "houston": "IAH",
+  "boston": "BOS",
+  "seattle": "SEA",
+  "washington": "IAD",
+  "washington dc": "IAD",
+  "dallas": "DFW",
+  "denver": "DEN",
+  "atlanta": "ATL",
+  "phoenix": "PHX",
+  "philadelphia": "PHL",
+  "toronto": "YYZ",
+  "vancouver": "YVR",
+  "montreal": "YUL",
+  "sydney": "SYD",
+  "melbourne": "MEL",
+  "singapore": "SIN",
+  "tokyo": "NRT",
+  "dubai": "DXB",
+  "abu dhabi": "AUH",
+  "paris": "CDG",
+  "amsterdam": "AMS",
+  "frankfurt": "FRA",
+  "barcelona": "BCN",
+  "madrid": "MAD",
+  "rome": "FCO",
+  "milan": "MXP",
+  "munich": "MUC",
+  "zurich": "ZRH",
+  "mexico city": "MEX",
+  "são paulo": "GRU",
+  "sao paulo": "GRU",
+  "chennai": "MAA",
+  "mumbai": "BOM",
+  "delhi": "DEL",
+  "bangalore": "BLR",
+  "hyderabad": "HYD",
+  "kolkata": "CCU",
+  "dublin": "DUB",
+  "brussels": "BRU",
+  "vienna": "VIE",
+  "lisbon": "LIS",
+  "stockholm": "ARN",
+  "copenhagen": "CPH",
+  "oslo": "OSL",
+  "helsinki": "HEL",
+  "warsaw": "WAW",
+  "prague": "PRG",
+  "istanbul": "IST",
+  "hong kong": "HKG",
+  "seoul": "ICN",
+  "beijing": "PEK",
+  "kuala lumpur": "KUL",
+  "bangkok": "BKK",
+  "jakarta": "CGK",
+  "manila": "MNL",
+  "perth": "PER",
+  "brisbane": "BNE",
+  "auckland": "AKL",
+  "johannesburg": "JNB",
+  "cape town": "CPT",
+  "cairo": "CAI",
+  "tel aviv": "TLV",
+  "riyadh": "RUH",
+  "doha": "DOH",
+};
+
+/** Try IATA lookup; also try without ", country" suffix so "San Francisco, USA" matches. */
+function getOriginIata(originCity: string): string | undefined {
+  let key = normalizeCity(originCity);
+  let iata = ORIGIN_CITY_TO_IATA[key];
+  if (iata) return iata;
+  // Strip ", country" / ", region" suffix and try again (e.g. "San Francisco, USA" -> "san francisco")
+  const comma = key.indexOf(",");
+  if (comma > 0) {
+    key = key.slice(0, comma).trim();
+    iata = ORIGIN_CITY_TO_IATA[key];
+  }
+  return iata;
+}
+
+/** Race city → IATA fallback when race.airportCode is missing (e.g. old stored JSON). */
+const RACE_CITY_TO_IATA: Record<string, string> = {
+  melbourne: "MEL",
+  shanghai: "PVG",
+  suzuka: "NGO",
+  sakhir: "BAH",
+  jeddah: "JED",
+  miami: "MIA",
+  montreal: "YUL",
+  "monte carlo": "NCE",
+  barcelona: "BCN",
+  spielberg: "GRZ",
+  silverstone: "LHR",
+  spa: "CRL",
+  budapest: "BUD",
+  zandvoort: "AMS",
+  monza: "MXP",
+  madrid: "MAD",
+  baku: "GYD",
+  singapore: "SIN",
+  austin: "AUS",
+  "mexico city": "MEX",
+  "são paulo": "GRU",
+  "sao paulo": "GRU",
+  "las vegas": "LAS",
+  lusail: "DOH",
+  "abu dhabi": "AUH",
+};
+
+function getDestIata(race: RaceWeekend): string | undefined {
+  if (race.airportCode) return race.airportCode;
+  const key = normalizeCity(race.city);
+  return RACE_CITY_TO_IATA[key];
+}
+
 export function buildFlightsLinks(
   request: TripRequest,
   race: RaceWeekend,
   dateOption: DateOption
 ): ProviderLink[] {
   const { originCity } = request;
-  const { departDateISO, returnDateISO } = dateOption;
+  const departDateISO = dateOption.departDateISO ?? "";
+  const returnDateISO = dateOption.returnDateISO ?? "";
+  const depart = departDateISO && departDateISO.length >= 10 ? departDateISO : "";
+  const return_ = returnDateISO && returnDateISO.length >= 10 ? returnDateISO : "";
 
-  // Google Flights deep link
-  const googleFlightsUrl = new URL("https://www.google.com/travel/flights");
+  // Google Flights: use /flights/search; q for route; set date params only when valid
+  const googleFlightsUrl = new URL("https://www.google.com/travel/flights/search");
   googleFlightsUrl.searchParams.set("q", `Flights from ${originCity} to ${race.city}`);
-  googleFlightsUrl.searchParams.set("departure", departDateISO);
-  googleFlightsUrl.searchParams.set("return", returnDateISO);
+  if (depart) googleFlightsUrl.searchParams.set("departure", depart);
+  if (return_) googleFlightsUrl.searchParams.set("return", return_);
 
-  // Skyscanner deep link
-  const skyscannerUrl = new URL("https://www.skyscanner.com/transport/flights");
-  skyscannerUrl.searchParams.set("origin", originCity);
-  skyscannerUrl.searchParams.set("destination", race.city);
-  skyscannerUrl.searchParams.set("departure", departDateISO);
-  skyscannerUrl.searchParams.set("return", returnDateISO);
+  // Skyscanner: expects IATA codes in path (e.g. sfo/ngo) and YYMMDD; city slugs often don't work
+  const outYYMMDD = toYYMMDD(depart);
+  const inYYMMDD = toYYMMDD(return_);
+  const originIata = getOriginIata(originCity);
+  const destIata = getDestIata(race);
+  const hasIata = originIata && destIata;
+  let skyscannerUrl: URL;
+  if (hasIata && outYYMMDD && inYYMMDD) {
+    const o = originIata.toLowerCase();
+    const d = destIata.toLowerCase();
+    skyscannerUrl = new URL(
+      `https://www.skyscanner.com/transport/flights/${o}/${d}/${outYYMMDD}/${inYYMMDD}`
+    );
+    skyscannerUrl.searchParams.set("adultsv2", "1");
+    skyscannerUrl.searchParams.set("cabinclass", "economy");
+    skyscannerUrl.searchParams.set("rtn", "1");
+  } else {
+    // Fallback: /transport/flights 404s; use main site so link works
+    skyscannerUrl = new URL("https://www.skyscanner.com/");
+  }
+
+  // Kayak: path with IATA codes so destination and dates are applied (city names often only set origin).
+  // Add cache-busting query param so Kayak doesn't reuse a previous search (e.g. LHR-NCE).
+  const kayakCacheBust = `_cb=${Date.now()}`;
+  let kayakUrl: URL;
+  if (hasIata && depart && return_) {
+    const o = originIata.toLowerCase();
+    const d = destIata.toLowerCase();
+    kayakUrl = new URL(`https://www.kayak.com/flights/${o}-${d}/${depart}/${return_}?${kayakCacheBust}`);
+  } else {
+    const kayakPath =
+      depart && return_
+        ? `/flights/${encodeURIComponent(originCity)}-${encodeURIComponent(race.city)}/${depart}/${return_}`
+        : `/flights/${encodeURIComponent(originCity)}-${encodeURIComponent(race.city)}`;
+    kayakUrl = new URL(kayakPath, "https://www.kayak.com");
+    kayakUrl.search = kayakCacheBust;
+  }
 
   return [
     {
       label: "Google Flights",
       href: googleFlightsUrl.toString(),
+      logo: "/logos/google-flights.svg",
     },
     {
       label: "Skyscanner",
       href: skyscannerUrl.toString(),
+      logo: "/logos/skyscanner.svg",
+    },
+    {
+      label: "Kayak",
+      href: kayakUrl.toString(),
+      logo: "/logos/kayak.svg",
     },
   ];
 }
@@ -199,4 +384,11 @@ export function getFlightNotesByBudget(budgetTier: BudgetTier): string[] {
   };
 
   return notes[budgetTier];
+}
+
+/**
+ * One-line copy for flight card expand: sets expectation that prices are on the partner site.
+ */
+export function getFlightPriceExpectationLine(): string {
+  return "Prices and availability vary by date and airline. Use the partner site to see current rates and book.";
 }

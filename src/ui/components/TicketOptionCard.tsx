@@ -13,11 +13,11 @@ function SourceIcon({ size = "md" }: { size?: "sm" | "md" }) {
   const isSm = size === "sm";
   return (
     <span
-      className={`flex shrink-0 items-center justify-center rounded bg-gray-800 text-gray-400 ${isSm ? "h-4 w-4" : "h-10 w-10 rounded-lg"}`}
+      className={`flex shrink-0 items-center justify-center rounded bg-gray-800 text-gray-400 ${isSm ? "h-4 w-4" : "h-14 w-14 rounded-lg"}`}
       aria-hidden
     >
       <svg
-        className={isSm ? "h-3 w-3" : "h-5 w-5"}
+        className={isSm ? "h-3 w-3" : "h-7 w-7"}
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -63,13 +63,13 @@ export function TicketOptionCard({ option }: TicketOptionCardProps) {
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="flex items-center gap-3">
           {sourceLogo ? (
-            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-900">
+            <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-900">
               <Image
                 src={sourceLogo}
                 alt=""
-                width={40}
-                height={40}
-                className="object-contain p-1"
+                width={56}
+                height={56}
+                className="object-contain"
               />
             </span>
           ) : (

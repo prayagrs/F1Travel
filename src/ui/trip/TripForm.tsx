@@ -6,6 +6,7 @@ import type { TripRequest, BudgetTier } from "@/domain/itinerary/types";
 import type { RaceWeekend } from "@/domain/races/types";
 import worldCities from "@/content/cities.json";
 import { getCountryFlag } from "@/ui/trip/countryFlags";
+import { setCachedResult } from "@/ui/trip/itineraryCache";
 import { Card } from "@/ui/components/Card";
 import { Skeleton, SkeletonInput, SkeletonSelect, SkeletonButton } from "@/ui/components/Skeleton";
 import { Spinner } from "@/ui/components/Spinner";
@@ -227,6 +228,7 @@ export function TripForm({ onSubmit }: TripFormProps) {
         }
 
         const data = await response.json();
+        if (data.result) setCachedResult(data.itineraryId, data.result);
         router.push(`/itinerary/${data.itineraryId}`);
       }
     } catch (err) {

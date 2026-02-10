@@ -24,6 +24,8 @@ export type RaceWeekend = {
   circuit: string;
   city: string;
   country: string;
+  /** Nearest airport IATA code for flight search links (e.g. NGO for Suzuka). */
+  airportCode?: string;
   raceDateISO: string;
   /** Official F1 ticket purchase URL (from tickets.formula1.com). */
   officialTicketsUrl?: string;
