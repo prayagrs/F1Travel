@@ -3,10 +3,39 @@
 import { useState } from "react";
 import Image from "next/image";
 import type { TicketOption } from "@/domain/races/types";
+import type { Currency } from "@/ui/components/FlightSearchCard";
 
 type TicketOptionCardProps = {
   option: TicketOption;
+  /** Display currency; when set, price is converted for display to match flight section. */
+  currency?: Currency;
 };
+
+/** Parse price string (e.g. "€400", "From €3,500") to number, source currency, and optional "From " prefix. */
+function parsePrice(
+  priceStr: string
+): { value: number; source: "EUR" | "USD"; fromPrefix: boolean } | null {
+  const fromPrefix = /^From\s+/i.test(priceStr);
+  const normalized = priceStr.replace(/,/g, "").replace(/^From\s+/i, "").trim();
+  const eurMatch = normalized.match(/€\s*([\d.]+)/);
+  const usdMatch = normalized.match(/\$\s*([\d.]+)/);
+  if (eurMatch) {
+    const n = Number.parseFloat(eurMatch[1]);
+    return Number.isNaN(n) ? null : { value: n, source: "EUR", fromPrefix };
+  }
+  if (usdMatch) {
+    const n = Number.parseFloat(usdMatch[1]);
+    return Number.isNaN(n) ? null : { value: n, source: "USD", fromPrefix };
+  }
+  return null;
+}
+
+/** Format numeric value in the requested currency (approximate EUR/USD conversion). */
+function formatTicketPrice(value: number, from: "EUR" | "USD", to: Currency): string {
+  if (from === to) return to === "EUR" ? `€${value.toLocaleString()}` : `$${value.toLocaleString()}`;
+  if (to === "USD") return `$${Math.round(value / 0.92).toLocaleString()}`;
+  return `€${Math.round(value * 0.92).toLocaleString()}`;
+}
 
 /** Fallback icon when no logo is provided */
 function SourceIcon({ size = "md" }: { size?: "sm" | "md" }) {
@@ -53,10 +82,20 @@ function InlineSourceLogo({
   );
 }
 
-export function TicketOptionCard({ option }: TicketOptionCardProps) {
+export function TicketOptionCard({ option, currency }: TicketOptionCardProps) {
   const { source, sourceLogo, stand, days, price, href, notes } = option;
   const [expanded, setExpanded] = useState(false);
   const hasNotes = notes && notes.length > 0;
+
+  const displayPrice =
+    currency != null
+      ? (() => {
+          const parsed = parsePrice(price);
+          if (!parsed) return price;
+          const formatted = formatTicketPrice(parsed.value, parsed.source, currency);
+          return parsed.fromPrefix ? `From ${formatted}` : formatted;
+        })()
+      : price;
 
   return (
     <div className="flex flex-col rounded-lg border border-gray-700 bg-gray-800/50 transition-colors hover:border-gray-600">
@@ -86,7 +125,7 @@ export function TicketOptionCard({ option }: TicketOptionCardProps) {
           </div>
         </div>
         <div className="flex items-center justify-between gap-4 sm:justify-end">
-          <span className="text-lg font-semibold text-emerald-500">{price}</span>
+          <span className="text-lg font-semibold text-emerald-500">{displayPrice}</span>
           <div className="flex items-center gap-2">
             <a
               href={href}

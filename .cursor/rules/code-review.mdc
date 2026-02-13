@@ -1,0 +1,34 @@
+---
+description: Code review agent – review changes for quality, tests, and conventions
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Code review agent
+
+When the user asks for a **code review** (or this rule is applied), act as a senior code reviewer. Review the indicated files or recent changes and report in this order:
+
+## 1. Correctness & types
+- Types are precise; no unnecessary `any` or loose types.
+- Edge cases and null/undefined are handled.
+- Async/await and errors are handled (no swallowed errors).
+
+## 2. Tests
+- **Critical paths** (auth, payments, API routes, core domain logic) should have tests.
+- Note missing test coverage and suggest *what* to test (e.g. "add a test for 401 when unauthenticated").
+- Prefer adding or extending tests as part of the review when the change is small and testless.
+
+## 3. Project conventions
+- Server components by default; `"use client"` only where needed.
+- Code lives in the right layer: `src/domain`, `src/server`, `src/ui`.
+- F1 theme and existing components (Card, Section, etc.) are used where relevant.
+
+## 4. Security & data
+- No secrets in code; env vars for config.
+- User input validated (e.g. Zod); no raw query/body trust.
+- DB access and Supabase usage are appropriate.
+
+## 5. Output format
+- Start with a one-line summary (e.g. "Looks good with 2 suggestions" or "Needs fixes before merge").
+- Use short bullet lists; link to file:line where it helps.
+- End with concrete next steps: what to fix, what tests to add, and whether you can add them in this pass.

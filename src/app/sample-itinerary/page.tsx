@@ -1,6 +1,6 @@
 import { raceRepo } from "@/server/repositories/raceRepo";
 import { buildItinerary } from "@/domain/itinerary/itineraryBuilder";
-import { ItineraryView } from "@/ui/trip/ItineraryView";
+import { SampleItineraryClient } from "@/ui/trip/SampleItineraryClient";
 import { Card } from "@/ui/components/Card";
 import Link from "next/link";
 
@@ -37,9 +37,9 @@ export default async function SampleItineraryPage() {
     budgetTier: "$$" as const,
   };
 
-  // Build the sample itinerary using the same logic as real itineraries
+  // Build the sample itinerary (no Amadeus here so the page renders immediately)
   const sampleItinerary = buildItinerary(sampleRequest, monacoRace);
-
+  // Client fetches flight prices in background and merges into state
   return (
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
       {/* Sample Banner - Prominent indicator this is not saved */}
@@ -71,8 +71,8 @@ export default async function SampleItineraryPage() {
         </div>
       </Card>
 
-      {/* Render the sample itinerary using the same component as real itineraries */}
-      <ItineraryView result={sampleItinerary} />
+      {/* Render the sample itinerary; flight prices load in background */}
+      <SampleItineraryClient initialResult={sampleItinerary} />
     </div>
   );
 }

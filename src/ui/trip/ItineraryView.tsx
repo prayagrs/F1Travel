@@ -6,7 +6,7 @@ import type { ItineraryResult } from "@/domain/itinerary/types";
 import { getFlightPriceExpectationLine } from "@/domain/itinerary/linkBuilders";
 import { Card } from "@/ui/components/Card";
 import { DateOptionTabs } from "@/ui/components/DateOptionTabs";
-import { FlightSearchCard } from "@/ui/components/FlightSearchCard";
+import { FlightSearchCard, type Currency } from "@/ui/components/FlightSearchCard";
 import { TicketOptionCard } from "@/ui/components/TicketOptionCard";
 import { getCircuitPath } from "@/ui/components/circuitPaths";
 import { getCircuitSVGConfig } from "@/ui/components/circuitSVGLoader";
@@ -14,6 +14,8 @@ import { getCircuitSvgPath } from "@/ui/components/circuitSvgFiles";
 
 type ItineraryViewProps = {
   result: ItineraryResult;
+  /** True while flight "from" prices are being fetched in the background. */
+  flightPricesLoading?: boolean;
 };
 
 /** Circuit SVG for the race details card (right side). Uses same assets as CircuitIcon. */
@@ -63,8 +65,33 @@ function RaceCircuitSvg({ raceId }: { raceId: string }) {
  * Presentational component that renders an ItineraryResult.
  * Renders deep links as external anchors.
  */
-export function ItineraryView({ result }: ItineraryViewProps) {
+/** Currency selector for the itinerary page. Placed in the header so it applies to all prices on the page. */
+function CurrencySelector({
+  value,
+  onChange,
+}: {
+  value: Currency;
+  onChange: (c: Currency) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-gray-400">Currency</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value as Currency)}
+        className="rounded-md border border-gray-600 bg-gray-800 px-3 py-1.5 text-sm font-medium text-white focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+        aria-label="Select currency"
+      >
+        <option value="USD">USD ($)</option>
+        <option value="EUR">EUR (€)</option>
+      </select>
+    </div>
+  );
+}
+
+export function ItineraryView({ result, flightPricesLoading = false }: ItineraryViewProps) {
   const [selectedOption, setSelectedOption] = useState(result.dateOptions[0]?.key || "");
+  const [currency, setCurrency] = useState<Currency>("USD");
 
   const selectedFlights = result.flightsByOption[selectedOption];
   const selectedStays = result.staysByOption[selectedOption];
@@ -97,9 +124,9 @@ export function ItineraryView({ result }: ItineraryViewProps) {
         </p>
       </Card>
 
-      {/* Race Info Header — F1 dark theme, font-heading, circuit SVG on right */}
+      {/* Race Info Header — F1 dark theme, font-heading, circuit on right */}
       <Card className="border-gray-800 bg-gray-900/30">
-        <div className="flex items-start justify-between gap-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="min-w-0 flex-1">
             <h1 className="font-heading text-3xl font-bold text-white">
               {result.race.name}
@@ -118,13 +145,20 @@ export function ItineraryView({ result }: ItineraryViewProps) {
         </div>
       </Card>
 
-      {/* One card: Option tabs + all booking sections with dividers (joined, less scrolling) */}
+      {/* One card: Option tabs (left) + currency (right) + all booking sections */}
       <Card className="border-gray-800 bg-gray-900/30 overflow-hidden">
-        <DateOptionTabs
-          options={result.dateOptions}
-          selectedKey={selectedOption}
-          onSelect={setSelectedOption}
-        />
+        <div className="flex flex-wrap items-center justify-between gap-4 px-4 pt-4">
+          <div className="min-w-0 flex-1">
+            <DateOptionTabs
+              options={result.dateOptions}
+              selectedKey={selectedOption}
+              onSelect={setSelectedOption}
+            />
+          </div>
+          <div className="shrink-0">
+            <CurrencySelector value={currency} onChange={setCurrency} />
+          </div>
+        </div>
         <hr className="border-t border-gray-700/80 my-0" aria-hidden />
         {/* Race Tickets */}
         <div className="py-5">
@@ -134,7 +168,7 @@ export function ItineraryView({ result }: ItineraryViewProps) {
           {result.tickets.options && result.tickets.options.length > 0 ? (
             <div className="space-y-4">
               {result.tickets.options.map((option, index) => (
-                <TicketOptionCard key={index} option={option} />
+                <TicketOptionCard key={index} option={option} currency={currency} />
               ))}
               <p className="text-sm text-gray-400">
                 Prices shown are indicative—verify with provider. Official and reseller prices vary by grandstand and circuit.
@@ -175,6 +209,15 @@ export function ItineraryView({ result }: ItineraryViewProps) {
                 <h2 className="font-heading text-lg font-semibold text-white mb-3">
                   {selectedFlights.title}
                 </h2>
+                {flightPricesLoading && (
+                  <p
+                    className="text-xs text-gray-500 mb-3"
+                    aria-live="polite"
+                    role="status"
+                  >
+                    Flight prices are loading
+                  </p>
+                )}
                 <div className="space-y-4">
                   {selectedFlights.links.map((link) => (
                     <FlightSearchCard
@@ -182,6 +225,8 @@ export function ItineraryView({ result }: ItineraryViewProps) {
                       link={link}
                       subtitle={flightSubtitle}
                       notes={flightNotesWithPrice}
+                      currency={currency}
+                      priceLoading={flightPricesLoading}
                     />
                   ))}
                 </div>

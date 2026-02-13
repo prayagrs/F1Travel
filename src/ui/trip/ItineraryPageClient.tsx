@@ -11,13 +11,34 @@ type ItineraryPageClientProps = {
   id: string;
 };
 
+/** Fetch flight prices in background and merge into result so page renders fast. */
+function fetchAndMergeFlightPrices(
+  id: string,
+  setResult: React.Dispatch<React.SetStateAction<ItineraryResult | null>>,
+  setFlightPricesLoading: React.Dispatch<React.SetStateAction<boolean>>
+) {
+  setFlightPricesLoading(true);
+  fetch(`/api/itineraries/${id}/flight-prices`, { credentials: "include" })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (data?.flightsByOption) {
+        setResult((prev) =>
+          prev ? { ...prev, flightsByOption: data.flightsByOption } : null
+        );
+      }
+    })
+    .catch(() => {})
+    .finally(() => setFlightPricesLoading(false));
+}
+
 /**
  * Client component that loads itinerary result from cache (after generate) or from API.
- * Uses cached result for instant paint when navigating from trip form; fetches merged result for direct links or to refresh.
+ * Result is shown immediately; flight prices load in a second request and merge in when ready.
  */
 export function ItineraryPageClient({ id }: ItineraryPageClientProps) {
   const [result, setResult] = useState<ItineraryResult | null>(() => getCachedResult(id) ?? null);
   const [loading, setLoading] = useState(!result);
+  const [flightPricesLoading, setFlightPricesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,7 +47,7 @@ export function ItineraryPageClient({ id }: ItineraryPageClientProps) {
       setResult(cached);
       setLoading(false);
       setError(null);
-      // Fetch merged result in background so tickets and flight links are current
+      // Fetch merged result in background, then flight prices so tickets/links and prices stay in sync
       fetch(`/api/itineraries/${id}/result`, { credentials: "include" })
         .then((res) => {
           if (!res.ok) return;
@@ -36,6 +57,7 @@ export function ItineraryPageClient({ id }: ItineraryPageClientProps) {
           if (data?.result) {
             setResult(data.result);
             clearCachedResult(id);
+            fetchAndMergeFlightPrices(id, setResult, setFlightPricesLoading);
           }
         })
         .catch(() => {});
@@ -55,7 +77,10 @@ export function ItineraryPageClient({ id }: ItineraryPageClientProps) {
         return res.json();
       })
       .then((data) => {
-        if (data?.result) setResult(data.result);
+        if (data?.result) {
+          setResult(data.result);
+          fetchAndMergeFlightPrices(id, setResult, setFlightPricesLoading);
+        }
       })
       .catch(() => setError("Failed to load itinerary"))
       .finally(() => setLoading(false));
@@ -86,5 +111,7 @@ export function ItineraryPageClient({ id }: ItineraryPageClientProps) {
     );
   }
 
-  return <ItineraryView result={result} />;
+  return (
+    <ItineraryView result={result} flightPricesLoading={flightPricesLoading} />
+  );
 }

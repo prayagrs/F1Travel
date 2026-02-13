@@ -87,6 +87,20 @@ body {
   animation: subtle-pulse 3s ease-in-out infinite;
 }
 
+/* Blink animation for loading indicators (e.g. flight price loading) */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.animate-blink {
+  animation: blink 1.2s ease-in-out infinite;
+}
+
 /* Skeleton shimmer animation for loading states */
 @keyframes shimmer {
   0% {

@@ -12,11 +12,6 @@ function toYYMMDD(iso: string): string {
   return `${y.slice(2)}${m}${d}`;
 }
 
-/** Slug for path: lowercase, spaces to hyphens, strip non-alphanumeric. */
-function toPathSlug(s: string): string {
-  return encodeURIComponent(String(s).trim().toLowerCase().replace(/\s+/g, "-"));
-}
-
 /** Normalize city name for IATA lookup: trim, lowercase, collapse spaces. */
 function normalizeCity(s: string): string {
   return String(s).trim().toLowerCase().replace(/\s+/g, " ");
@@ -99,8 +94,8 @@ const ORIGIN_CITY_TO_IATA: Record<string, string> = {
   "doha": "DOH",
 };
 
-/** Try IATA lookup; also try without ", country" suffix so "San Francisco, USA" matches. */
-function getOriginIata(originCity: string): string | undefined {
+/** Try IATA lookup; also try without ", country" suffix so "San Francisco, USA" matches. Exported for server-side flight API (e.g. Amadeus). */
+export function getOriginIata(originCity: string): string | undefined {
   let key = normalizeCity(originCity);
   let iata = ORIGIN_CITY_TO_IATA[key];
   if (iata) return iata;
@@ -142,7 +137,8 @@ const RACE_CITY_TO_IATA: Record<string, string> = {
   "abu dhabi": "AUH",
 };
 
-function getDestIata(race: RaceWeekend): string | undefined {
+/** Race city to IATA. Exported for server-side flight API (e.g. Amadeus). */
+export function getDestIata(race: RaceWeekend): string | undefined {
   if (race.airportCode) return race.airportCode;
   const key = normalizeCity(race.city);
   return RACE_CITY_TO_IATA[key];
@@ -203,6 +199,8 @@ export function buildFlightsLinks(
     kayakUrl.search = kayakCacheBust;
   }
 
+  // Flight "from" prices are set only by the merge step (Amadeus when configured).
+  // No placeholder here to avoid flash-then-disappear when merged result loads.
   return [
     {
       label: "Google Flights",
@@ -390,5 +388,5 @@ export function getFlightNotesByBudget(budgetTier: BudgetTier): string[] {
  * One-line copy for flight card expand: sets expectation that prices are on the partner site.
  */
 export function getFlightPriceExpectationLine(): string {
-  return "Prices and availability vary by date and airline. Use the partner site to see current rates and book.";
+  return "Prices and availability vary by date and airline. Use the partner site to see more flight options, current rates and book.";
 }
