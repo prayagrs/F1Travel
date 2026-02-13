@@ -251,14 +251,17 @@ export function buildStaysLinks(
     {
       label: "Booking.com",
       href: bookingUrl.toString(),
+      logo: "/logos/booking.svg",
     },
     {
       label: "Airbnb",
       href: airbnbUrl.toString(),
+      logo: "/logos/airbnb.svg",
     },
     {
       label: "Google Hotels",
       href: googleHotelsUrl.toString(),
+      logo: "/logos/google.svg",
     },
   ];
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getOriginIata, getDestIata } from "./linkBuilders";
+import { getOriginIata, getDestIata, buildStaysLinks } from "./linkBuilders";
 
 describe("linkBuilders", () => {
   describe("getOriginIata", () => {
@@ -58,6 +58,67 @@ describe("linkBuilders", () => {
           raceDateISO: "2025-01-01",
         })
       ).toBeUndefined();
+    });
+  });
+
+  describe("buildStaysLinks", () => {
+    const race = {
+      id: "monaco-gp",
+      name: "Monaco GP",
+      circuit: "Circuit de Monaco",
+      city: "Monte Carlo",
+      country: "Monaco",
+      raceDateISO: "2026-06-07",
+    };
+    const dateOption = {
+      key: "opt1",
+      label: "Jun 2 - Jun 12",
+      departDateISO: "2026-06-02",
+      returnDateISO: "2026-06-12",
+    };
+
+    it("returns three provider links (Booking.com, Airbnb, Google Hotels)", () => {
+      const links = buildStaysLinks(race, dateOption);
+      expect(links).toHaveLength(3);
+      expect(links.map((l) => l.label)).toEqual([
+        "Booking.com",
+        "Airbnb",
+        "Google Hotels",
+      ]);
+    });
+
+    it("includes logo path on each link", () => {
+      const links = buildStaysLinks(race, dateOption);
+      expect(links[0].logo).toBe("/logos/booking.svg");
+      expect(links[1].logo).toBe("/logos/airbnb.svg");
+      expect(links[2].logo).toBe("/logos/google.svg");
+    });
+
+    it("builds Booking.com URL with city and dates", () => {
+      const links = buildStaysLinks(race, dateOption);
+      const booking = links[0];
+      expect(booking.href).toContain("booking.com");
+      expect(booking.href).toContain("ss=Monte+Carlo");
+      expect(booking.href).toContain("checkin=2026-06-02");
+      expect(booking.href).toContain("checkout=2026-06-12");
+    });
+
+    it("builds Airbnb URL with city and dates", () => {
+      const links = buildStaysLinks(race, dateOption);
+      const airbnb = links[1];
+      expect(airbnb.href).toContain("airbnb.com");
+      expect(airbnb.href).toContain("query=Monte+Carlo");
+      expect(airbnb.href).toContain("checkin=2026-06-02");
+      expect(airbnb.href).toContain("checkout=2026-06-12");
+    });
+
+    it("builds Google Hotels URL with city and dates", () => {
+      const links = buildStaysLinks(race, dateOption);
+      const google = links[2];
+      expect(google.href).toContain("google.com/travel/hotels");
+      expect(google.href).toContain("Hotels+in+Monte+Carlo");
+      expect(google.href).toContain("checkin=2026-06-02");
+      expect(google.href).toContain("checkout=2026-06-12");
     });
   });
 });

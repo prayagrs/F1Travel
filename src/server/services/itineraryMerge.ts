@@ -3,7 +3,9 @@ import type { ItineraryRecord } from "@/server/repositories/itineraryRepo";
 import {
   buildTicketsSection,
   buildFlightsLinks,
+  buildStaysLinks,
   getFlightNotesByBudget,
+  getNeighborhoodTipsByBudget,
 } from "@/domain/itinerary/linkBuilders";
 import { generateDateOptions } from "@/domain/itinerary/dateOptions";
 import type { DateOption, ItineraryResult, SectionLinks, TripRequest } from "@/domain/itinerary/types";
@@ -69,7 +71,35 @@ export function getMergedItineraryResult(itinerary: ItineraryRecord): ItineraryR
     Object.assign(flightsByOption, stored.flightsByOption ?? {});
   }
 
-  return { ...stored, tickets, flightsByOption };
+  // Rebuild staysByOption (with logos) from stored race + date options, same pattern as flights
+  const staysByOption: Record<string, SectionLinks> = {};
+  if (stored.dateOptions?.length && stored.race) {
+    const raceForStays = currentRace ? { ...stored.race, ...currentRace } : stored.race;
+    for (const dateOption of stored.dateOptions) {
+      const raw = dateOption as Record<string, unknown>;
+      const departStr = raw.departDateISO ?? raw.depart_date_iso;
+      const returnStr = raw.returnDateISO ?? raw.return_date_iso;
+      if (typeof departStr !== "string" || typeof returnStr !== "string") {
+        continue;
+      }
+      const normalizedOption = {
+        key: dateOption.key,
+        label: dateOption.label,
+        departDateISO: departStr,
+        returnDateISO: returnStr,
+      };
+      const links = buildStaysLinks(raceForStays, normalizedOption);
+      staysByOption[dateOption.key] = {
+        title: "Accommodation",
+        links,
+        notes: getNeighborhoodTipsByBudget(stored.request?.budgetTier ?? "$$"),
+      };
+    }
+  } else {
+    Object.assign(staysByOption, stored.staysByOption ?? {});
+  }
+
+  return { ...stored, tickets, flightsByOption, staysByOption };
 }
 
 /**

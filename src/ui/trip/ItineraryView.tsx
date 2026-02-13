@@ -7,6 +7,7 @@ import { getFlightPriceExpectationLine } from "@/domain/itinerary/linkBuilders";
 import { Card } from "@/ui/components/Card";
 import { DateOptionTabs } from "@/ui/components/DateOptionTabs";
 import { FlightSearchCard, type Currency } from "@/ui/components/FlightSearchCard";
+import { StaySearchCard } from "@/ui/components/StaySearchCard";
 import { TicketOptionCard } from "@/ui/components/TicketOptionCard";
 import { getCircuitPath } from "@/ui/components/circuitPaths";
 import { getCircuitSVGConfig } from "@/ui/components/circuitSVGLoader";
@@ -235,38 +236,36 @@ export function ItineraryView({ result, flightPricesLoading = false }: Itinerary
           );
         })()}
 
-        {selectedStays && (
-          <>
-            <hr className="border-t border-gray-700/80 my-0" aria-hidden />
-            <div className="py-5" id="section-stays">
-              <h2 className="font-heading text-lg font-semibold text-white mb-3">
-                {selectedStays.title}
-              </h2>
-              <div className="space-y-4">
-                <div className="flex flex-wrap gap-3">
-                  {selectedStays.links.map((link, index) => (
-                    <a
-                      key={index}
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center rounded-md border border-gray-600 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:border-red-600/50 hover:bg-red-600/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 min-h-[44px] items-center justify-center"
-                    >
-                      {link.label}
-                    </a>
+        {selectedStays && (() => {
+          const selectedDateOption = result.dateOptions.find((o) => o.key === selectedOption);
+          const staysSubtitle = `Hotels in ${result.race.city} · ${selectedDateOption?.label ?? ""}`;
+          return (
+            <>
+              <hr className="border-t border-gray-700/80 my-0" aria-hidden />
+              <div className="py-5" id="section-stays">
+                <h2 className="font-heading text-lg font-semibold text-white mb-3">
+                  {selectedStays.title}
+                </h2>
+                <div className="space-y-4">
+                  {selectedStays.links.map((link) => (
+                    <StaySearchCard
+                      key={link.href}
+                      link={link}
+                      subtitle={staysSubtitle}
+                    />
                   ))}
+                  {selectedStays.notes && selectedStays.notes.length > 0 && (
+                    <ul className="space-y-1 text-sm text-gray-400">
+                      {selectedStays.notes.map((note, index) => (
+                        <li key={index}>• {note}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                {selectedStays.notes && selectedStays.notes.length > 0 && (
-                  <ul className="space-y-1 text-sm text-gray-400">
-                    {selectedStays.notes.map((note, index) => (
-                      <li key={index}>• {note}</li>
-                    ))}
-                  </ul>
-                )}
               </div>
-            </div>
-          </>
-        )}
+            </>
+          );
+        })()}
 
         <hr className="border-t border-gray-700/80 my-0" aria-hidden />
         <div className="py-5 last:pb-0" id="section-experiences">
