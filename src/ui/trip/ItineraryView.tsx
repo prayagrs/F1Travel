@@ -13,12 +13,13 @@ import {
   DEFAULT_SECTION_FILTERS,
   ITINERARY_SECTION_KEYS,
 } from "@/domain/itinerary/types";
+import { appendReturnUrlToHref } from "@/domain/itinerary/linkBuilders";
 import { getFlightPriceExpectationLine } from "@/domain/itinerary/linkBuilders";
 import Image from "next/image";
 import { Card } from "@/ui/components/Card";
 import { DateOptionTabs } from "@/ui/components/DateOptionTabs";
 import { SectionFilterChips } from "@/ui/components/SectionFilterChips";
-import { AddBookingForm } from "@/ui/components/AddBookingForm";
+import { AddBookingForm, type AddBookingPreFill } from "@/ui/components/AddBookingForm";
 import { FlightSearchCard, type Currency } from "@/ui/components/FlightSearchCard";
 import { ExperienceProviderCard } from "@/ui/components/ExperienceProviderCard";
 import { StaySearchCard } from "@/ui/components/StaySearchCard";
@@ -71,6 +72,14 @@ function sectionFiltersToSearchParams(filters: SectionFilters): string {
   return on.join(",");
 }
 
+/** Pre-fill values when user lands with ?return=stay|ticket|flight|activity. */
+const RETURN_PREFILL: Record<ItinerarySectionKey, AddBookingPreFill | undefined> = {
+  stays: { provider: "Booking.com" },
+  tickets: { provider: "Official F1" },
+  flights: { provider: "Google Flights" },
+  experiences: { provider: "GetYourGuide" },
+};
+
 /** Renders "Your booking(s)" list and Add booking button/form for one section. */
 function BookingsForSection({
   sectionKey,
@@ -79,6 +88,7 @@ function BookingsForSection({
   onBookingAdded,
   addBookingSection,
   setAddBookingSection,
+  preFill,
 }: {
   sectionKey: ItinerarySectionKey;
   bookings: ItineraryBookingRecord[];
@@ -86,9 +96,28 @@ function BookingsForSection({
   onBookingAdded?: () => void;
   addBookingSection: ItinerarySectionKey | null;
   setAddBookingSection: (k: ItinerarySectionKey | null) => void;
+  preFill?: AddBookingPreFill;
 }) {
   const type = SECTION_TO_BOOKING_TYPE[sectionKey];
   const sectionBookings = bookings.filter((b) => b.type === type);
+  const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
+  const editingBooking = sectionBookings.find((b) => b.id === editingBookingId);
+
+  async function handleRemove(bookingId: string) {
+    if (!onBookingAdded) return;
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setEditingBookingId(null);
+        onBookingAdded();
+      }
+    } catch {
+      // ignore
+    }
+  }
 
   return (
     <div className="mb-4 space-y-3">
@@ -102,16 +131,40 @@ function BookingsForSection({
               <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span className="text-white font-medium">{b.provider}</span>
                 <span className="text-gray-400 font-mono">{b.confirmationRef}</span>
-                {b.detailsUrl && (
-                  <a
-                    href={b.detailsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-red-400 hover:text-red-300"
-                  >
-                    View on provider →
-                  </a>
-                )}
+                <span className="flex items-center gap-2">
+                  {b.detailsUrl && (
+                    <a
+                      href={b.detailsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      View on provider →
+                    </a>
+                  )}
+                  {itineraryId && onBookingAdded && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingBookingId(b.id);
+                          setAddBookingSection(sectionKey);
+                        }}
+                        className="text-gray-400 hover:text-white text-xs font-medium"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemove(b.id)}
+                        className="text-red-400 hover:text-red-300 text-xs font-medium"
+                        aria-label={`Remove ${b.provider} booking`}
+                      >
+                        Remove
+                      </button>
+                    </>
+                  )}
+                </span>
               </li>
             ))}
           </ul>
@@ -120,15 +173,37 @@ function BookingsForSection({
       {itineraryId && onBookingAdded && (
         <>
           {addBookingSection === sectionKey ? (
-            <AddBookingForm
-              itineraryId={itineraryId}
-              type={type}
-              onSuccess={() => {
-                onBookingAdded();
-                setAddBookingSection(null);
-              }}
-              onCancel={() => setAddBookingSection(null)}
-            />
+            <>
+              {preFill?.provider && (
+                <p className="text-sm text-gray-400 mb-2">
+                  Add your confirmation from {preFill.provider}.
+                </p>
+              )}
+              {editingBooking ? (
+                <AddBookingForm
+                  itineraryId={itineraryId}
+                  type={type}
+                  booking={editingBooking}
+                  onSuccess={() => {
+                    onBookingAdded();
+                    setEditingBookingId(null);
+                  }}
+                  onCancel={() => setEditingBookingId(null)}
+                  preFill={preFill}
+                />
+              ) : (
+                <AddBookingForm
+                  itineraryId={itineraryId}
+                  type={type}
+                  onSuccess={() => {
+                    onBookingAdded();
+                    setAddBookingSection(null);
+                  }}
+                  onCancel={() => setAddBookingSection(null)}
+                  preFill={preFill}
+                />
+              )}
+            </>
           ) : (
             <button
               type="button"
@@ -239,7 +314,31 @@ export function ItineraryView({
   const searchParams = useSearchParams();
   const [selectedOption, setSelectedOption] = useState(result.dateOptions[0]?.key || "");
   const [currency, setCurrency] = useState<Currency>("USD");
-  const [addBookingSection, setAddBookingSection] = useState<ItinerarySectionKey | null>(null);
+  const [userAddBookingSection, setUserAddBookingSection] = useState<ItinerarySectionKey | null>(null);
+
+  const returnParam = searchParams.get("return");
+  const sectionFromReturn = useMemo(() => {
+    if (!returnParam) return null;
+    const map: Record<string, ItinerarySectionKey> = {
+      stay: "stays",
+      ticket: "tickets",
+      flight: "flights",
+      activity: "experiences",
+    };
+    return map[returnParam.toLowerCase()] ?? null;
+  }, [returnParam]);
+  const addBookingSection = sectionFromReturn ?? userAddBookingSection;
+  const setAddBookingSection = useCallback(
+    (k: ItinerarySectionKey | null) => {
+      setUserAddBookingSection(k);
+      if (k === null && returnParam) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("return");
+        router.replace(url.pathname + url.search, { scroll: false });
+      }
+    },
+    [returnParam, router]
+  );
 
   const sectionFilters = useMemo(
     () => parseSectionFiltersFromSearchParams(searchParams),
@@ -281,13 +380,10 @@ export function ItineraryView({
         </ol>
       </nav>
 
-      {/* Disclaimers — F1 dark theme */}
-      <Card className="border-amber-800/60 bg-amber-900/20 text-amber-200">
-        <p className="text-sm">
-          <strong>Disclaimer:</strong> All links open external websites. Prices and availability
-          may change. Please verify all information with providers before booking.
-        </p>
-      </Card>
+      {/* Short disclaimer at top — full text is in main card for visibility when scrolled */}
+      <p className="text-xs text-gray-500">
+        External links. We may earn a fee when you book via some links—price unchanged.
+      </p>
 
       {/* Race Info Header — F1 dark theme, font-heading, circuit on right */}
       <Card className="border-gray-800 bg-gray-900/30">
@@ -324,6 +420,9 @@ export function ItineraryView({
             <CurrencySelector value={currency} onChange={setCurrency} />
           </div>
         </div>
+        <p className="mt-3 px-4 text-xs text-gray-500">
+          External links. We may earn a fee when you book via some links—price unchanged.
+        </p>
         <div className="mt-4 px-4">
           <SectionFilterChips filters={sectionFilters} onChange={setSectionFilter} />
         </div>
@@ -333,9 +432,10 @@ export function ItineraryView({
         {/* Race Tickets */}
         {sectionFilters.tickets && (
         <div className="py-5">
-          <h2 className="font-heading text-lg font-semibold text-white mb-3" id="section-tickets">
+          <h2 className="font-heading text-lg font-semibold text-white mb-1" id="section-tickets">
             {result.tickets.title}
           </h2>
+          <p className="text-sm text-gray-400 mb-3">One tap to search and book on your chosen provider.</p>
           <BookingsForSection
             sectionKey="tickets"
             bookings={bookings}
@@ -343,6 +443,7 @@ export function ItineraryView({
             onBookingAdded={onBookingAdded}
             addBookingSection={addBookingSection}
             setAddBookingSection={setAddBookingSection}
+            preFill={returnParam ? RETURN_PREFILL.tickets : undefined}
           />
           {result.tickets.options && result.tickets.options.length > 0 ? (
             <div className="space-y-4">
@@ -362,9 +463,14 @@ export function ItineraryView({
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 min-h-[44px] items-center justify-center"
+                    className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 min-h-[44px] items-center justify-center gap-1.5"
                   >
                     {link.label}
+                    {link.isAffiliate && (
+                      <span className="text-xs font-normal opacity-90" aria-label="Partner link">
+                        Partner
+                      </span>
+                    )}
                   </a>
                 ))}
               </div>
@@ -386,9 +492,10 @@ export function ItineraryView({
             <>
               <hr className="border-t border-gray-700/80 my-0" aria-hidden />
               <div className="py-5" id="section-flights">
-                <h2 className="font-heading text-lg font-semibold text-white mb-3">
+                <h2 className="font-heading text-lg font-semibold text-white mb-1">
                   {selectedFlights.title}
                 </h2>
+                <p className="text-sm text-gray-400 mb-3">One tap to search and book on your chosen provider.</p>
                 <BookingsForSection
                   sectionKey="flights"
                   bookings={bookings}
@@ -396,6 +503,7 @@ export function ItineraryView({
                   onBookingAdded={onBookingAdded}
                   addBookingSection={addBookingSection}
                   setAddBookingSection={setAddBookingSection}
+                  preFill={returnParam ? RETURN_PREFILL.flights : undefined}
                 />
                 {flightPricesLoading && (
                   <p
@@ -415,6 +523,7 @@ export function ItineraryView({
                       notes={flightNotesWithPrice}
                       currency={currency}
                       priceLoading={flightPricesLoading}
+                      ctaLabel={link.isAffiliate ? "Search & book" : undefined}
                     />
                   ))}
                 </div>
@@ -430,9 +539,10 @@ export function ItineraryView({
             <>
               <hr className="border-t border-gray-700/80 my-0" aria-hidden />
               <div className="py-5" id="section-stays">
-                <h2 className="font-heading text-lg font-semibold text-white mb-3">
+                <h2 className="font-heading text-lg font-semibold text-white mb-1">
                   {selectedStays.title}
                 </h2>
+                <p className="text-sm text-gray-400 mb-3">One tap to search and book on your chosen provider.</p>
                 <BookingsForSection
                   sectionKey="stays"
                   bookings={bookings}
@@ -440,15 +550,30 @@ export function ItineraryView({
                   onBookingAdded={onBookingAdded}
                   addBookingSection={addBookingSection}
                   setAddBookingSection={setAddBookingSection}
+                  preFill={returnParam ? RETURN_PREFILL.stays : undefined}
                 />
                 <div className="space-y-4">
-                  {selectedStays.links.map((link) => (
-                    <StaySearchCard
-                      key={link.href}
-                      link={link}
-                      subtitle={staysSubtitle}
-                    />
-                  ))}
+                  {selectedStays.links.map((link) => {
+                    const href =
+                      link.label === "Booking.com" &&
+                      itineraryId &&
+                      typeof window !== "undefined"
+                        ? appendReturnUrlToHref(
+                            link.href,
+                            window.location.origin,
+                            itineraryId,
+                            "stay"
+                          )
+                        : link.href;
+                    return (
+                      <StaySearchCard
+                        key={link.href}
+                        link={{ ...link, href }}
+                        subtitle={staysSubtitle}
+                        ctaLabel={link.isAffiliate ? "Search & book" : "Search"}
+                      />
+                    );
+                  })}
                   {selectedStays.notes && selectedStays.notes.length > 0 && (
                     <ul className="space-y-1 text-sm text-gray-400">
                       {selectedStays.notes.map((note, index) => (
@@ -466,9 +591,10 @@ export function ItineraryView({
         <>
         <hr className="border-t border-gray-700/80 my-0" aria-hidden />
         <div className="py-5 last:pb-0" id="section-experiences">
-          <h2 className="font-heading text-lg font-semibold text-white mb-3">
+          <h2 className="font-heading text-lg font-semibold text-white mb-1">
             {result.experiences.title}
           </h2>
+          <p className="text-sm text-gray-400 mb-3">One tap to search and book on your chosen provider.</p>
           <BookingsForSection
             sectionKey="experiences"
             bookings={bookings}
@@ -476,6 +602,7 @@ export function ItineraryView({
             onBookingAdded={onBookingAdded}
             addBookingSection={addBookingSection}
             setAddBookingSection={setAddBookingSection}
+            preFill={returnParam ? RETURN_PREFILL.experiences : undefined}
           />
           <div className="space-y-4">
             {result.experiences.links.map((link) => (
@@ -484,6 +611,7 @@ export function ItineraryView({
                 link={link}
                 subtitle={`Tours & activities in ${result.race.city}`}
                 activities={result.experiences.providerActivities?.[link.label]}
+                ctaLabel={link.isAffiliate ? "Search & book" : undefined}
               />
             ))}
           </div>

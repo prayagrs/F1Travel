@@ -4,7 +4,7 @@ import { getSession } from "@/server/auth/session";
 import { bookingRepo } from "@/server/repositories/bookingRepo";
 import { Card } from "@/ui/components/Card";
 import { getCountryFlag } from "@/ui/trip/countryFlags";
-import type { BookingType } from "@/domain/itinerary/types";
+import { BookingRowWithActions } from "@/ui/account/BookingRowWithActions";
 
 /** Format raceId to display name with "GP" uppercased. */
 function formatRaceName(raceId: string): string {
@@ -19,13 +19,6 @@ function formatRaceDate(iso: string | null): string {
   const d = new Date(iso);
   return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
-
-const BOOKING_TYPE_LABELS: Record<BookingType, string> = {
-  flight: "Flight",
-  stay: "Accommodation",
-  ticket: "Race ticket",
-  activity: "Experience",
-};
 
 /**
  * My Bookings page: lists all user bookings grouped by trip (itinerary).
@@ -121,33 +114,7 @@ export default async function MyBookingsPage() {
 
                 <ul className="mt-4 space-y-3" aria-label="Bookings for this trip">
                   {group.bookings.map((b) => (
-                    <li
-                      key={b.id}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-700 bg-gray-800/50 px-4 py-3"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                          {BOOKING_TYPE_LABELS[b.type]}
-                        </span>
-                        <p className="font-medium text-white mt-0.5">{b.provider}</p>
-                        <p className="text-sm text-gray-400">
-                          Confirmation: <span className="text-gray-300 font-mono">{b.confirmationRef}</span>
-                        </p>
-                        {b.notes && (
-                          <p className="text-sm text-gray-500 mt-1">{b.notes}</p>
-                        )}
-                      </div>
-                      {b.detailsUrl && (
-                        <a
-                          href={b.detailsUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="shrink-0 rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
-                        >
-                          View on {b.provider}
-                        </a>
-                      )}
-                    </li>
+                    <BookingRowWithActions key={b.id} booking={b} />
                   ))}
                 </ul>
               </div>

@@ -5,6 +5,7 @@ import {
   buildStaysLinks,
   buildExperiencesLinks,
   buildExperiencesSection,
+  appendReturnUrlToHref,
 } from "./linkBuilders";
 
 describe("linkBuilders", () => {
@@ -125,6 +126,27 @@ describe("linkBuilders", () => {
       expect(google.href).toContain("Hotels+in+Monte+Carlo");
       expect(google.href).toContain("checkin=2026-06-02");
       expect(google.href).toContain("checkout=2026-06-12");
+    });
+  });
+
+  describe("appendReturnUrlToHref", () => {
+    it("appends redirect_uri with itinerary and section when baseUrl and itineraryId provided", () => {
+      const href = "https://www.booking.com/searchresults.html?ss=Melbourne";
+      const out = appendReturnUrlToHref(href, "https://app.example.com", "it-123", "stay");
+      const parsed = new URL(out);
+      expect(parsed.searchParams.get("redirect_uri")).toBe(
+        "https://app.example.com/itinerary/it-123?return=stay"
+      );
+    });
+
+    it("returns href unchanged when baseUrl is empty", () => {
+      const href = "https://www.booking.com/searchresults.html";
+      expect(appendReturnUrlToHref(href, "", "it-123", "stay")).toBe(href);
+    });
+
+    it("returns href unchanged when itineraryId is empty", () => {
+      const href = "https://www.booking.com/searchresults.html";
+      expect(appendReturnUrlToHref(href, "https://app.example.com", "", "stay")).toBe(href);
     });
   });
 

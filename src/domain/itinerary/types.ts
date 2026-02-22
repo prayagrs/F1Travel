@@ -47,6 +47,8 @@ export type ProviderLink = {
   fromPrice?: string;
   /** Optional one sample result (airline, times, stops, duration) to show on the card. */
   sampleFlight?: SampleFlight;
+  /** When true, show a "Partner" label; link uses affiliate/partner tracking. */
+  isAffiliate?: boolean;
 };
 
 export type SectionLinks = {

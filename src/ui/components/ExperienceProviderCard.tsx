@@ -56,7 +56,14 @@ export function ExperienceProviderCard({
             <ExperienceFallbackIcon />
           )}
           <div className="space-y-0.5">
-            <p className="font-medium text-white">{link.label}</p>
+            <p className="font-medium text-white">
+              {link.label}
+              {link.isAffiliate && (
+                <span className="ml-2 text-xs font-normal text-gray-500" aria-label="Partner link">
+                  Partner
+                </span>
+              )}
+            </p>
             <p className="text-sm text-gray-400">{subtitle}</p>
           </div>
         </div>

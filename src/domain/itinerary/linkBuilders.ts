@@ -12,6 +12,14 @@ import type { TicketOption } from "../races/types";
 
 /** Optional affiliate/partner query string for official F1 ticket URLs (e.g. "partner=xyz"). Only appended when set. */
 const F1_TICKETS_AFFILIATE_PARAM = typeof process !== "undefined" ? process.env.F1_TICKETS_AFFILIATE_PARAM : undefined;
+/** Booking.com affiliate aid (e.g. aid=123456). Only appended when set. */
+const BOOKING_AFFILIATE_AID = typeof process !== "undefined" ? process.env.BOOKING_AFFILIATE_AID : undefined;
+/** Skyscanner partner ID for affiliate tracking. Only appended when set. */
+const SKYSCANNER_PARTNER_ID = typeof process !== "undefined" ? process.env.SKYSCANNER_PARTNER_ID : undefined;
+/** Viator partner/affiliate ID. Only appended when set. */
+const VIATOR_PARTNER_ID = typeof process !== "undefined" ? process.env.VIATOR_PARTNER_ID : undefined;
+/** GetYourGuide partner ID. Only appended when set. */
+const GETYOURGUIDE_PARTNER_ID = typeof process !== "undefined" ? process.env.GETYOURGUIDE_PARTNER_ID : undefined;
 
 /**
  * Appends an optional affiliate param to a URL. Uses ? or & as needed.
@@ -30,6 +38,31 @@ function appendAffiliateParam(url: string, param: string | undefined): string {
     return parsed.toString();
   } catch {
     return url;
+  }
+}
+
+/**
+ * Appends a return URL param so the partner can redirect the user back to this itinerary section after booking.
+ * Use when building links that support post-booking redirect (e.g. Booking.com redirect_uri).
+ * @param href - Outbound partner URL
+ * @param baseUrl - App origin (e.g. window.location.origin or NEXT_PUBLIC_APP_URL)
+ * @param itineraryId - Itinerary ID
+ * @param section - Section key for ?return= (stay | ticket | flight | activity)
+ */
+export function appendReturnUrlToHref(
+  href: string,
+  baseUrl: string,
+  itineraryId: string,
+  section: "stay" | "ticket" | "flight" | "activity"
+): string {
+  if (!baseUrl?.trim() || !itineraryId?.trim()) return href;
+  try {
+    const returnPath = `${baseUrl.replace(/\/$/, "")}/itinerary/${itineraryId}?return=${section}`;
+    const parsed = new URL(href);
+    parsed.searchParams.set("redirect_uri", returnPath);
+    return parsed.toString();
+  } catch {
+    return href;
   }
 }
 
@@ -223,6 +256,9 @@ export function buildFlightsLinks(
     // Fallback: /transport/flights 404s; use main site so link works
     skyscannerUrl = new URL("https://www.skyscanner.com/");
   }
+  if (SKYSCANNER_PARTNER_ID?.trim()) {
+    skyscannerUrl.searchParams.set("partner", SKYSCANNER_PARTNER_ID.trim());
+  }
 
   // Kayak: path with IATA codes so destination and dates are applied (city names often only set origin).
   // Add cache-busting query param so Kayak doesn't reuse a previous search (e.g. LHR-NCE).
@@ -241,8 +277,7 @@ export function buildFlightsLinks(
     kayakUrl.search = kayakCacheBust;
   }
 
-  // Flight "from" prices are set only by the merge step (Amadeus when configured).
-  // No placeholder here to avoid flash-then-disappear when merged result loads.
+  const skyscannerAffiliate = Boolean(SKYSCANNER_PARTNER_ID?.trim());
   return [
     {
       label: "Google Flights",
@@ -253,6 +288,7 @@ export function buildFlightsLinks(
       label: "Skyscanner",
       href: skyscannerUrl.toString(),
       logo: "/logos/skyscanner.svg",
+      isAffiliate: skyscannerAffiliate,
     },
     {
       label: "Kayak",
@@ -276,6 +312,9 @@ export function buildStaysLinks(
   bookingUrl.searchParams.set("ss", race.city);
   bookingUrl.searchParams.set("checkin", departDateISO);
   bookingUrl.searchParams.set("checkout", returnDateISO);
+  if (BOOKING_AFFILIATE_AID?.trim()) {
+    bookingUrl.searchParams.set("aid", BOOKING_AFFILIATE_AID.trim());
+  }
 
   // Airbnb deep link
   const airbnbUrl = new URL("https://www.airbnb.com/s");
@@ -289,11 +328,13 @@ export function buildStaysLinks(
   googleHotelsUrl.searchParams.set("checkin", departDateISO);
   googleHotelsUrl.searchParams.set("checkout", returnDateISO);
 
+  const bookingAffiliate = Boolean(BOOKING_AFFILIATE_AID?.trim());
   return [
     {
       label: "Booking.com",
       href: bookingUrl.toString(),
       logo: "/logos/booking.svg",
+      isAffiliate: bookingAffiliate,
     },
     {
       label: "Airbnb",
@@ -318,10 +359,12 @@ export function buildTicketsLinks(race: {
 }): ProviderLink[] {
   const links: ProviderLink[] = [];
 
+  const f1Affiliate = Boolean(F1_TICKETS_AFFILIATE_PARAM?.trim());
   if (race.officialTicketsUrl) {
     links.push({
       label: "Official F1 Tickets",
       href: appendAffiliateParam(race.officialTicketsUrl, F1_TICKETS_AFFILIATE_PARAM),
+      isAffiliate: f1Affiliate,
     });
   }
   if (race.otherTicketsUrl) {
@@ -368,17 +411,39 @@ export function buildTicketsSection(race: RaceWeekend): TicketsSection {
 export function buildExperiencesLinks(race: { city: string; country: string }): ProviderLink[] {
   const getYourGuideUrl = new URL("https://www.getyourguide.com/s");
   getYourGuideUrl.searchParams.set("q", race.city);
+  if (GETYOURGUIDE_PARTNER_ID?.trim()) {
+    getYourGuideUrl.searchParams.set("partner_id", GETYOURGUIDE_PARTNER_ID.trim());
+  }
 
   const viatorUrl = new URL("https://www.viator.com/searchResults/all");
   viatorUrl.searchParams.set("text", race.city);
+  if (VIATOR_PARTNER_ID?.trim()) {
+    viatorUrl.searchParams.set("mcid", VIATOR_PARTNER_ID.trim());
+  }
 
   const tripAdvisorUrl = new URL("https://www.tripadvisor.com/Search");
   tripAdvisorUrl.searchParams.set("q", `${race.city} things to do`);
 
+  const gygAffiliate = Boolean(GETYOURGUIDE_PARTNER_ID?.trim());
+  const viatorAffiliate = Boolean(VIATOR_PARTNER_ID?.trim());
   return [
-    { label: "GetYourGuide", href: getYourGuideUrl.toString(), logo: "/logos/getyourguide.svg" },
-    { label: "Viator", href: viatorUrl.toString(), logo: "/logos/viator.svg" },
-    { label: "TripAdvisor", href: tripAdvisorUrl.toString(), logo: "/logos/tripadvisor.svg" },
+    {
+      label: "GetYourGuide",
+      href: getYourGuideUrl.toString(),
+      logo: "/logos/getyourguide.svg",
+      isAffiliate: gygAffiliate,
+    },
+    {
+      label: "Viator",
+      href: viatorUrl.toString(),
+      logo: "/logos/viator.svg",
+      isAffiliate: viatorAffiliate,
+    },
+    {
+      label: "TripAdvisor",
+      href: tripAdvisorUrl.toString(),
+      logo: "/logos/tripadvisor.svg",
+    },
   ];
 }
 

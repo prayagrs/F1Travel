@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/server/auth/session";
 import { itineraryRepo } from "@/server/repositories/itineraryRepo";
 import { bookingRepo } from "@/server/repositories/bookingRepo";
-import { BOOKING_TYPES } from "@/domain/itinerary/types";
+import { validateBookingInput } from "@/domain/itinerary/bookingValidation";
 
 /**
  * GET /api/itineraries/[id]/bookings
@@ -54,28 +54,31 @@ export async function POST(
 
     const body = await request.json();
     const type = body?.type;
-    const provider = body?.provider?.trim?.();
-    const confirmationRef = body?.confirmationRef?.trim?.();
+    const provider = body?.provider ?? "";
+    const confirmationRef = body?.confirmationRef ?? "";
+    const detailsUrl = body?.detailsUrl ?? null;
+    const notes = body?.notes ?? null;
 
-    if (!type || !BOOKING_TYPES.includes(type)) {
-      return NextResponse.json(
-        { error: "Invalid type; must be one of: flight, stay, ticket, activity" },
-        { status: 400 }
-      );
-    }
-    if (!provider || provider.length === 0) {
-      return NextResponse.json({ error: "provider is required" }, { status: 400 });
-    }
-    if (!confirmationRef || confirmationRef.length === 0) {
-      return NextResponse.json({ error: "confirmationRef is required" }, { status: 400 });
-    }
-
-    const booking = await bookingRepo.create(itineraryId, session.user.id, {
+    const validationError = validateBookingInput({
       type,
       provider,
       confirmationRef,
-      detailsUrl: body.detailsUrl ?? null,
-      notes: body.notes ?? null,
+      detailsUrl,
+      notes,
+    });
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
+    const providerTrim = provider.trim();
+    const confirmationRefTrim = confirmationRef.trim();
+
+    const booking = await bookingRepo.create(itineraryId, session.user.id, {
+      type,
+      provider: providerTrim,
+      confirmationRef: confirmationRefTrim,
+      detailsUrl: detailsUrl?.trim() || null,
+      notes: notes?.trim() || null,
     });
 
     return NextResponse.json({ booking }, { status: 201 });

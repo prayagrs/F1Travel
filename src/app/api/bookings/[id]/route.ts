@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/server/auth/session";
 import { bookingRepo } from "@/server/repositories/bookingRepo";
+import { validateBookingInput } from "@/domain/itinerary/bookingValidation";
 
 /**
  * PATCH /api/bookings/[id]
@@ -17,22 +18,35 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const body = await request.json();
-    const update: {
-      provider?: string;
-      confirmationRef?: string;
-      detailsUrl?: string | null;
-      notes?: string | null;
-    } = {};
-    if (body?.provider !== undefined) update.provider = String(body.provider).trim();
-    if (body?.confirmationRef !== undefined) update.confirmationRef = String(body.confirmationRef).trim();
-    if (body?.detailsUrl !== undefined) update.detailsUrl = body.detailsUrl === "" ? null : body.detailsUrl;
-    if (body?.notes !== undefined) update.notes = body.notes === "" ? null : body.notes;
-
-    const booking = await bookingRepo.update(id, session.user.id, update);
-    if (!booking) {
+    const existing = await bookingRepo.getById(id);
+    if (!existing || existing.userId !== session.user.id) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
+
+    const body = await request.json();
+    const provider = body?.provider !== undefined ? String(body.provider) : existing.provider;
+    const confirmationRef = body?.confirmationRef !== undefined ? String(body.confirmationRef) : existing.confirmationRef;
+    const detailsUrl = body?.detailsUrl !== undefined ? body.detailsUrl : existing.detailsUrl;
+    const notes = body?.notes !== undefined ? body.notes : existing.notes;
+
+    const validationError = validateBookingInput({
+      type: existing.type,
+      provider,
+      confirmationRef,
+      detailsUrl: detailsUrl ?? null,
+      notes: notes ?? null,
+    });
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
+    const update = {
+      provider: provider.trim(),
+      confirmationRef: confirmationRef.trim(),
+      detailsUrl: detailsUrl === "" ? null : (detailsUrl?.trim() || null),
+      notes: notes === "" ? null : (notes?.trim() || null),
+    };
+    const booking = await bookingRepo.update(id, session.user.id, update);
     return NextResponse.json({ booking }, { status: 200 });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Internal server error";

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import type { BookingType } from "@/domain/itinerary/types";
+import type { BookingType, ItineraryBookingRecord } from "@/domain/itinerary/types";
+import { validateBookingInput } from "@/domain/itinerary/bookingValidation";
 
 const BOOKING_TYPE_LABELS: Record<BookingType, string> = {
   flight: "Flight",
@@ -10,11 +11,20 @@ const BOOKING_TYPE_LABELS: Record<BookingType, string> = {
   activity: "Experience",
 };
 
+export type AddBookingPreFill = {
+  provider?: string;
+  detailsUrl?: string;
+};
+
 type AddBookingFormProps = {
   itineraryId: string;
   type: BookingType;
   onSuccess: () => void;
   onCancel: () => void;
+  /** Pre-fill when user returns from partner (e.g. ?return=stay). */
+  preFill?: AddBookingPreFill;
+  /** When set, form is in edit mode: PATCH this booking. */
+  booking?: ItineraryBookingRecord;
 };
 
 export function AddBookingForm({
@@ -22,38 +32,61 @@ export function AddBookingForm({
   type,
   onSuccess,
   onCancel,
+  preFill,
+  booking,
 }: AddBookingFormProps) {
-  const [provider, setProvider] = useState("");
-  const [confirmationRef, setConfirmationRef] = useState("");
-  const [detailsUrl, setDetailsUrl] = useState("");
-  const [notes, setNotes] = useState("");
+  const isEdit = Boolean(booking);
+  const [provider, setProvider] = useState(booking?.provider ?? preFill?.provider ?? "");
+  const [confirmationRef, setConfirmationRef] = useState(booking?.confirmationRef ?? "");
+  const [detailsUrl, setDetailsUrl] = useState(booking?.detailsUrl ?? preFill?.detailsUrl ?? "");
+  const [notes, setNotes] = useState(booking?.notes ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!provider.trim() || !confirmationRef.trim()) {
-      setError("Provider and confirmation number are required.");
+    const validationError = validateBookingInput({
+      type,
+      provider,
+      confirmationRef,
+      detailsUrl: detailsUrl || null,
+      notes: notes || null,
+    });
+    if (validationError) {
+      setError(validationError);
       return;
     }
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/itineraries/${itineraryId}/bookings`, {
-        method: "POST",
+      const url = isEdit && booking
+        ? `/api/bookings/${booking.id}`
+        : `/api/itineraries/${itineraryId}/bookings`;
+      const method = isEdit ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          type,
-          provider: provider.trim(),
-          confirmationRef: confirmationRef.trim(),
-          detailsUrl: detailsUrl.trim() || undefined,
-          notes: notes.trim() || undefined,
-        }),
+        body: JSON.stringify(
+          isEdit
+            ? {
+                provider: provider.trim(),
+                confirmationRef: confirmationRef.trim(),
+                detailsUrl: detailsUrl.trim() || undefined,
+                notes: notes.trim() || undefined,
+              }
+            : {
+                type,
+                provider: provider.trim(),
+                confirmationRef: confirmationRef.trim(),
+                detailsUrl: detailsUrl.trim() || undefined,
+                notes: notes.trim() || undefined,
+              }
+        ),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.error ?? "Failed to add booking");
+        setError(data?.error ?? (isEdit ? "Failed to update booking" : "Failed to add booking"));
         return;
       }
       onSuccess();
@@ -68,10 +101,10 @@ export function AddBookingForm({
     <form
       onSubmit={handleSubmit}
       className="rounded-lg border border-gray-600 bg-gray-800/80 p-4 space-y-3"
-      aria-label={`Add ${BOOKING_TYPE_LABELS[type]} booking`}
+      aria-label={isEdit ? `Edit ${BOOKING_TYPE_LABELS[type]} booking` : `Add ${BOOKING_TYPE_LABELS[type]} booking`}
     >
       <p className="text-sm font-medium text-white">
-        Add {BOOKING_TYPE_LABELS[type]} booking
+        {isEdit ? "Edit" : "Add"} {BOOKING_TYPE_LABELS[type]} booking
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block">
@@ -126,7 +159,7 @@ export function AddBookingForm({
           disabled={submitting}
           className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-red-500"
         >
-          {submitting ? "Saving…" : "Save booking"}
+          {submitting ? "Saving…" : isEdit ? "Update booking" : "Save booking"}
         </button>
         <button
           type="button"
