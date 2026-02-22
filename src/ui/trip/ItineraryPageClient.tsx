@@ -54,9 +54,7 @@ export function ItineraryPageClient({ id }: ItineraryPageClientProps) {
   useEffect(() => {
     const cached = getCachedResult(id);
     if (cached) {
-      setResult(cached);
-      setLoading(false);
-      setError(null);
+      // Initial state already has result from useState(() => getCachedResult(id) ?? null); avoid sync setState in effect
       // Fetch merged result in background, then flight prices so tickets/links and prices stay in sync
       fetch(`/api/itineraries/${id}/result`, { credentials: "include" })
         .then((res) => {
@@ -74,9 +72,12 @@ export function ItineraryPageClient({ id }: ItineraryPageClientProps) {
       return;
     }
 
-    setResult(null);
-    setLoading(true);
-    setError(null);
+    // Defer setState to avoid synchronous setState in effect (react-hooks/set-state-in-effect)
+    const timeoutId = setTimeout(() => {
+      setResult(null);
+      setLoading(true);
+      setError(null);
+    }, 0);
     fetch(`/api/itineraries/${id}/result`, { credentials: "include" })
       .then((res) => {
         if (!res.ok) {
@@ -94,6 +95,7 @@ export function ItineraryPageClient({ id }: ItineraryPageClientProps) {
       })
       .catch(() => setError("Failed to load itinerary"))
       .finally(() => setLoading(false));
+    return () => clearTimeout(timeoutId);
   }, [id]);
 
   useEffect(() => {

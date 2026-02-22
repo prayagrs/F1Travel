@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 
 /**
@@ -28,7 +29,7 @@ export function PreviewStrip() {
       >
         {/* Monaco GP circuit SVG - actual track layout */}
         <div className="absolute top-4 right-4 opacity-15 group-hover:opacity-25 transition-opacity animate-f1-pulse" aria-hidden="true">
-          <img
+          <Image
             src="/circuit-svg/monaco-svgfind-com.svg"
             alt=""
             width={80}

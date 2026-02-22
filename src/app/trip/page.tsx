@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { getSession } from "@/server/auth/session";
 import { TripForm } from "@/ui/trip/TripForm";
 import { Card } from "@/ui/components/Card";

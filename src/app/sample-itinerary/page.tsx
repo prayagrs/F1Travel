@@ -50,7 +50,7 @@ export default async function SampleItineraryPage() {
               Sample Itinerary Preview
             </h2>
             <p className="mt-1 text-sm text-blue-800 dark:text-blue-300">
-              This is a sample itinerary to show you what you'll get. It is{" "}
+              This is a sample itinerary to show you what you&apos;ll get. It is{" "}
               <strong>not saved</strong> to any account.{" "}
               <Link
                 href="/api/auth/signin"

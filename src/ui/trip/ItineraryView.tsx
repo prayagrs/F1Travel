@@ -14,6 +14,7 @@ import {
   ITINERARY_SECTION_KEYS,
 } from "@/domain/itinerary/types";
 import { getFlightPriceExpectationLine } from "@/domain/itinerary/linkBuilders";
+import Image from "next/image";
 import { Card } from "@/ui/components/Card";
 import { DateOptionTabs } from "@/ui/components/DateOptionTabs";
 import { SectionFilterChips } from "@/ui/components/SectionFilterChips";
@@ -155,7 +156,7 @@ function RaceCircuitSvg({ raceId }: { raceId: string }) {
 
   if (svgFileUrl) {
     return (
-      <img
+      <Image
         src={svgFileUrl}
         alt=""
         width={size}

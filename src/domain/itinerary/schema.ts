@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { BudgetTier } from "./types";
 
 export const budgetTierSchema = z.enum(["$", "$$", "$$$"]);
 

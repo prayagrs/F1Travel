@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Card } from "@/ui/components/Card";
 import { PreviewStrip } from "@/ui/components/PreviewStrip";
 
 /**

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- Node seed script run with node prisma/seed.js (CommonJS) */
 /**
  * Seed mock ItineraryBooking records for verifying the "Add booking" / My Bookings flow.
  *

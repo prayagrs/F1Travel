@@ -18,7 +18,6 @@ export function SampleItineraryClient({ initialResult }: SampleItineraryClientPr
   const [flightPricesLoading, setFlightPricesLoading] = useState(true);
 
   useEffect(() => {
-    setFlightPricesLoading(true);
     fetch("/api/flight-prices/sample", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {

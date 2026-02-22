@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRef, useState, useCallback, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import type { RaceWeekend } from "@/domain/races/types";
@@ -86,7 +87,7 @@ export function CircuitIcon({ race, isNextRace = false }: CircuitIconProps) {
         >
           <div className={`relative ${isNextRace ? "animate-pulse" : ""}`}>
             {svgFileUrl ? (
-              <img
+              <Image
                 src={svgFileUrl}
                 alt=""
                 width={32}

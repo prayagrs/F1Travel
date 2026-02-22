@@ -91,7 +91,7 @@ export function TripForm({ onSubmit }: TripFormProps) {
     if (!showInlineSuggestion || !firstMatch) return;
     setFormData((prev) => ({ ...prev, originCity: firstMatch }));
     validateField("originCity", firstMatch);
-  }, [showInlineSuggestion, firstMatch]);
+  }, [showInlineSuggestion, firstMatch, validateField]);
 
   const handleOriginKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -110,10 +110,10 @@ export function TripForm({ onSubmit }: TripFormProps) {
     [showInlineSuggestion, firstMatch, acceptInlineSuggestion]
   );
 
-  // Real-time validation
-  const validateField = (field: string, value: string | number) => {
-    const errors = { ...validationErrors };
-    
+  // Real-time validation (memoized so acceptInlineSuggestion deps are stable)
+  const validateField = useCallback((field: string, value: string | number) => {
+    const errors: typeof validationErrors = { ...validationErrors };
+
     switch (field) {
       case "originCity":
         if (typeof value === "string") {
@@ -148,9 +148,9 @@ export function TripForm({ onSubmit }: TripFormProps) {
         }
         break;
     }
-    
+
     setValidationErrors(errors);
-  };
+  }, [validationErrors]);
 
   // Check if form is valid
   const isFormValid = () => {
