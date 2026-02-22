@@ -1,0 +1,4 @@
+# Never read or suggest edits to env files (real secrets)
+.env
+.env.*
+!.env.example

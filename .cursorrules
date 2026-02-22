@@ -5,6 +5,9 @@
 - Prisma 5 + PostgreSQL (Supabase)
 - NextAuth for auth; Tailwind CSS for styling
 
+## Secrets
+- **Never** put real API keys, client secrets, passwords, or NEXTAUTH_SECRET in any file that is committed (no .md, .ts, .tsx, .env.example, or docs). Use placeholders only (e.g. `your-google-client-id`, `your-nextauth-secret`). Real credentials belong only in local `.env` (already in .gitignore).
+
 ## Conventions
 - Prefer server components; use "use client" only when needed (state, events, browser APIs).
 - Data: domain types in src/domain, server/db in src/server, UI in src/ui.

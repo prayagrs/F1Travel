@@ -42,7 +42,7 @@ npm install
 ```
 
 3. Set up environment variables:
-Create a `.env` file with:
+Create a `.env` file with the variables below (use your own values). **Never commit `.env` or put real credentials in any file.**
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/f1travel"
 NEXTAUTH_URL="http://localhost:3000"
