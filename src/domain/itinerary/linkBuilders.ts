@@ -1,5 +1,47 @@
-import type { BudgetTier, ProviderLink, TripRequest, DateOption, TicketsSection } from "./types";
+import type {
+  BudgetTier,
+  ExperienceActivity,
+  ExperiencesSection,
+  ProviderLink,
+  TripRequest,
+  DateOption,
+  TicketsSection,
+} from "./types";
 import type { RaceWeekend } from "../races/types";
+import type { TicketOption } from "../races/types";
+
+/** Optional affiliate/partner query string for official F1 ticket URLs (e.g. "partner=xyz"). Only appended when set. */
+const F1_TICKETS_AFFILIATE_PARAM = typeof process !== "undefined" ? process.env.F1_TICKETS_AFFILIATE_PARAM : undefined;
+
+/**
+ * Appends an optional affiliate param to a URL. Uses ? or & as needed.
+ * Safe when param is undefined or empty: returns url unchanged.
+ */
+function appendAffiliateParam(url: string, param: string | undefined): string {
+  if (!param || param.trim() === "") return url;
+  try {
+    const parsed = new URL(url);
+    const toAppend = param.trim().startsWith("?") ? param.trim().slice(1) : param.trim();
+    if (parsed.search) {
+      parsed.search += "&" + toAppend;
+    } else {
+      parsed.search = toAppend;
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+/** True when href is the official F1 ticket site (tickets.formula1.com). */
+function isOfficialF1TicketsUrl(href: string): boolean {
+  try {
+    const u = new URL(href);
+    return u.hostname === "tickets.formula1.com";
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Builds deep links for flights (Google Flights, Skyscanner, Kayak).
@@ -279,7 +321,7 @@ export function buildTicketsLinks(race: {
   if (race.officialTicketsUrl) {
     links.push({
       label: "Official F1 Tickets",
-      href: race.officialTicketsUrl,
+      href: appendAffiliateParam(race.officialTicketsUrl, F1_TICKETS_AFFILIATE_PARAM),
     });
   }
   if (race.otherTicketsUrl) {
@@ -303,38 +345,151 @@ export function buildTicketsLinks(race: {
 
 /**
  * Builds the tickets section with optional curated options (card display) and fallback links.
+ * Official F1 ticket URLs (tickets.formula1.com) get the optional affiliate param when F1_TICKETS_AFFILIATE_PARAM is set.
  */
 export function buildTicketsSection(race: RaceWeekend): TicketsSection {
   const links = buildTicketsLinks(race);
+  const options: TicketOption[] | undefined = race.ticketOptions?.map((opt) => ({
+    ...opt,
+    href: isOfficialF1TicketsUrl(opt.href)
+      ? appendAffiliateParam(opt.href, F1_TICKETS_AFFILIATE_PARAM)
+      : opt.href,
+  }));
   return {
     title: "Race Tickets",
     links,
-    options: race.ticketOptions,
+    options: options ?? race.ticketOptions,
   };
 }
 
 /**
- * Builds deep links for experiences (GetYourGuide + Viator)
+ * Builds deep links for experiences (GetYourGuide, Viator, TripAdvisor)
  */
 export function buildExperiencesLinks(race: { city: string; country: string }): ProviderLink[] {
-  // GetYourGuide deep link
   const getYourGuideUrl = new URL("https://www.getyourguide.com/s");
   getYourGuideUrl.searchParams.set("q", race.city);
 
-  // Viator deep link
   const viatorUrl = new URL("https://www.viator.com/searchResults/all");
   viatorUrl.searchParams.set("text", race.city);
 
+  const tripAdvisorUrl = new URL("https://www.tripadvisor.com/Search");
+  tripAdvisorUrl.searchParams.set("q", `${race.city} things to do`);
+
   return [
-    {
-      label: "GetYourGuide",
-      href: getYourGuideUrl.toString(),
-    },
-    {
-      label: "Viator",
-      href: viatorUrl.toString(),
-    },
+    { label: "GetYourGuide", href: getYourGuideUrl.toString(), logo: "/logos/getyourguide.svg" },
+    { label: "Viator", href: viatorUrl.toString(), logo: "/logos/viator.svg" },
+    { label: "TripAdvisor", href: tripAdvisorUrl.toString(), logo: "/logos/tripadvisor.svg" },
   ];
+}
+
+/** Normalize city name for activity lookup: lowercase, trim. */
+function normalizeCityForActivities(city: string): string {
+  return String(city).trim().toLowerCase();
+}
+
+/**
+ * City-level fallback: 1–2 activities per provider when race has no experienceOptions.
+ * Key is normalized city name (e.g. "melbourne", "barcelona").
+ */
+const CITY_ACTIVITIES_FALLBACK: Record<
+  string,
+  Record<string, ExperienceActivity[]>
+> = {
+  melbourne: {
+    GetYourGuide: [
+      { title: "Melbourne City Highlights Tour", href: "https://www.getyourguide.com/melbourne-l123/", description: "Discover top sights and hidden gems" },
+      { title: "Yarra Valley Wine Tour", href: "https://www.getyourguide.com/melbourne-l123/", description: "Wine tasting and scenic day trip" },
+    ],
+    Viator: [
+      { title: "Phillip Island & Penguin Parade", href: "https://www.viator.com/Melbourne/d384-ttd", description: "Wildlife and coastal scenery" },
+    ],
+    TripAdvisor: [
+      { title: "Things to Do in Melbourne", href: "https://www.tripadvisor.com/Attractions-g255100-Activities-Melbourne_Victoria.html", description: "Tours, food & culture" },
+    ],
+  },
+  barcelona: {
+    GetYourGuide: [
+      { title: "Sagrada Familia & Park Güell Tour", href: "https://www.getyourguide.com/barcelona-l45/", description: "Gaudí masterpieces" },
+      { title: "Tapas and Wine Experience", href: "https://www.getyourguide.com/barcelona-l45/", description: "Food tour in the Gothic Quarter" },
+    ],
+    Viator: [
+      { title: "Montserrat Half-Day Trip", href: "https://www.viator.com/Barcelona/d562-ttd", description: "Monastery and mountain views" },
+    ],
+    TripAdvisor: [
+      { title: "Things to Do in Barcelona", href: "https://www.tripadvisor.com/Attractions-g187497-Activities-Barcelona_Catalonia.html", description: "Tours and attractions" },
+    ],
+  },
+  "monte carlo": {
+    GetYourGuide: [
+      { title: "Monaco & Monte Carlo Tour", href: "https://www.getyourguide.com/monaco-l395/", description: "Principality highlights" },
+      { title: "French Riviera Day Trip", href: "https://www.getyourguide.com/monaco-l395/", description: "Nice, Eze, and coastal views" },
+    ],
+    Viator: [
+      { title: "Monaco Grand Prix Circuit Walk", href: "https://www.viator.com/Monaco/d802-ttd", description: "Walk the famous track" },
+    ],
+    TripAdvisor: [
+      { title: "Things to Do in Monaco", href: "https://www.tripadvisor.com/Attractions-g190410-Activities-Monaco.html", description: "Tours and experiences" },
+    ],
+  },
+  miami: {
+    GetYourGuide: [
+      { title: "Everglades Airboat Adventure", href: "https://www.getyourguide.com/miami-l358/", description: "Wildlife and wetlands" },
+      { title: "South Beach Food & Art Walk", href: "https://www.getyourguide.com/miami-l358/", description: "Food and culture tour" },
+    ],
+    Viator: [
+      { title: "Miami Boat Tour", href: "https://www.viator.com/Miami/d662-ttd", description: "Harbor and celebrity homes" },
+    ],
+    TripAdvisor: [
+      { title: "Things to Do in Miami", href: "https://www.tripadvisor.com/Attractions-g34438-Activities-Miami_Beach_Florida.html", description: "Tours and activities" },
+    ],
+  },
+  montreal: {
+    GetYourGuide: [
+      { title: "Old Montreal Walking Tour", href: "https://www.getyourguide.com/montreal-l359/", description: "History and architecture" },
+      { title: "Food Tour of Mile End", href: "https://www.getyourguide.com/montreal-l359/", description: "Local eats and culture" },
+    ],
+    Viator: [
+      { title: "Montreal City Sightseeing", href: "https://www.viator.com/Montreal/d625-ttd", description: "Top attractions by bus or foot" },
+    ],
+    TripAdvisor: [
+      { title: "Things to Do in Montreal", href: "https://www.tripadvisor.com/Attractions-g155032-Activities-Montreal_Quebec.html", description: "Tours and experiences" },
+    ],
+  },
+};
+
+const MAX_ACTIVITIES_PER_PROVIDER = 2;
+
+/**
+ * Builds the full experiences section: provider links plus optional 1–2 activities per provider.
+ * Uses race.experienceOptions when present, otherwise city-level fallback.
+ */
+export function buildExperiencesSection(race: RaceWeekend): ExperiencesSection {
+  const links = buildExperiencesLinks(race);
+  const providerActivities: Record<string, ExperienceActivity[]> = {};
+
+  if (race.experienceOptions && race.experienceOptions.length > 0) {
+    for (const entry of race.experienceOptions) {
+      const activities = entry.activities.slice(0, MAX_ACTIVITIES_PER_PROVIDER);
+      if (activities.length > 0) {
+        providerActivities[entry.provider] = activities as ExperienceActivity[];
+      }
+    }
+  } else {
+    const cityKey = normalizeCityForActivities(race.city);
+    const byCity = CITY_ACTIVITIES_FALLBACK[cityKey];
+    if (byCity) {
+      for (const label of links.map((l) => l.label)) {
+        const activities = byCity[label]?.slice(0, MAX_ACTIVITIES_PER_PROVIDER);
+        if (activities?.length) providerActivities[label] = activities;
+      }
+    }
+  }
+
+  return {
+    title: "Experiences & Activities",
+    links,
+    ...(Object.keys(providerActivities).length > 0 ? { providerActivities } : {}),
+  };
 }
 
 /**

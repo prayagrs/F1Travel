@@ -5,7 +5,7 @@ import {
   buildFlightsLinks,
   buildStaysLinks,
   buildTicketsSection,
-  buildExperiencesLinks,
+  buildExperiencesSection,
   getNeighborhoodTipsByBudget,
   getFlightNotesByBudget,
 } from "./linkBuilders";
@@ -47,11 +47,7 @@ export function buildItinerary(
   const tickets = buildTicketsSection(race);
 
   // Build experiences section (constant, not per date option)
-  const experienceLinks = buildExperiencesLinks(race);
-  const experiences = {
-    title: "Experiences & Activities",
-    links: experienceLinks,
-  };
+  const experiences = buildExperiencesSection(race);
 
   return {
     request,

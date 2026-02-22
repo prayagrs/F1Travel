@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { getOriginIata, getDestIata, buildStaysLinks } from "./linkBuilders";
+import {
+  getOriginIata,
+  getDestIata,
+  buildStaysLinks,
+  buildExperiencesLinks,
+  buildExperiencesSection,
+} from "./linkBuilders";
 
 describe("linkBuilders", () => {
   describe("getOriginIata", () => {
@@ -119,6 +125,80 @@ describe("linkBuilders", () => {
       expect(google.href).toContain("Hotels+in+Monte+Carlo");
       expect(google.href).toContain("checkin=2026-06-02");
       expect(google.href).toContain("checkout=2026-06-12");
+    });
+  });
+
+  describe("buildExperiencesLinks", () => {
+    it("returns three providers (GetYourGuide, Viator, TripAdvisor)", () => {
+      const links = buildExperiencesLinks({ city: "Barcelona", country: "Spain" });
+      expect(links).toHaveLength(3);
+      expect(links.map((l) => l.label)).toEqual([
+        "GetYourGuide",
+        "Viator",
+        "TripAdvisor",
+      ]);
+    });
+
+    it("builds search URLs with city", () => {
+      const links = buildExperiencesLinks({ city: "Monte Carlo", country: "Monaco" });
+      expect(links[0].href).toContain("getyourguide.com");
+      expect(links[0].href).toContain("Monte+Carlo");
+      expect(links[1].href).toContain("viator.com");
+      expect(links[2].href).toContain("tripadvisor.com");
+      expect(links[2].href).toContain("things+to+do");
+    });
+  });
+
+  describe("buildExperiencesSection", () => {
+    it("returns section with title and three provider links", () => {
+      const race = {
+        id: "monaco-gp",
+        name: "Monaco GP",
+        circuit: "Circuit de Monaco",
+        city: "Monte Carlo",
+        country: "Monaco",
+        raceDateISO: "2026-06-07",
+      };
+      const section = buildExperiencesSection(race);
+      expect(section.title).toBe("Experiences & Activities");
+      expect(section.links).toHaveLength(3);
+    });
+
+    it("includes city fallback activities for known cities", () => {
+      const race = {
+        id: "miami-gp",
+        name: "Miami GP",
+        circuit: "Miami",
+        city: "Miami",
+        country: "United States",
+        raceDateISO: "2026-05-03",
+      };
+      const section = buildExperiencesSection(race);
+      expect(section.providerActivities).toBeDefined();
+      expect(section.providerActivities?.GetYourGuide).toHaveLength(2);
+      expect(section.providerActivities?.Viator?.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("uses race experienceOptions when present", () => {
+      const race = {
+        id: "monaco-gp",
+        name: "Monaco GP",
+        circuit: "Circuit de Monaco",
+        city: "Monte Carlo",
+        country: "Monaco",
+        raceDateISO: "2026-06-07",
+        experienceOptions: [
+          {
+            provider: "GetYourGuide",
+            activities: [
+              { title: "Monaco Tour", href: "https://example.com/1", description: "A tour" },
+            ],
+          },
+        ],
+      };
+      const section = buildExperiencesSection(race);
+      expect(section.providerActivities?.GetYourGuide).toHaveLength(1);
+      expect(section.providerActivities?.GetYourGuide?.[0].title).toBe("Monaco Tour");
     });
   });
 });

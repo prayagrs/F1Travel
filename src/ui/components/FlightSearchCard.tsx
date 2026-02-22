@@ -4,9 +4,13 @@ import { useState } from "react";
 import Image from "next/image";
 import type { ProviderLink } from "@/domain/itinerary/types";
 
+import type { DisplayCurrency } from "@/domain/currency";
+import { convertToDisplay, formatInCurrency } from "@/domain/currency";
+
 export type FlightSearchCardLink = ProviderLink;
 
-export type Currency = "USD" | "EUR";
+/** Re-export for components that need the same type (e.g. ItineraryView currency selector). */
+export type Currency = DisplayCurrency;
 
 type FlightSearchCardProps = {
   link: FlightSearchCardLink;
@@ -14,7 +18,7 @@ type FlightSearchCardProps = {
   /** When provided, shows expand/collapse for tips (pass section notes to first card only) */
   notes?: string[];
   ctaLabel?: string;
-  /** Display currency for the "from" price; matches TicketOptionCard (green price). Default USD. */
+  /** Display currency for the "from" price; matches TicketOptionCard. All amounts shown in this currency. */
   currency?: Currency;
   /** When true and no fromPrice yet, shows Material "travel" icon (blinking) where the price will appear. */
   priceLoading?: boolean;
@@ -56,15 +60,12 @@ function TravelLoadingIcon() {
   );
 }
 
-/** Format numeric price string for display with currency symbol. EUR uses approximate rate for display. */
+/** Format numeric price string (from API, typically USD) for display in selected currency. */
 function formatPrice(priceStr: string, currency: Currency): string {
   const num = Number.parseFloat(priceStr);
   if (Number.isNaN(num)) return priceStr;
-  if (currency === "EUR") {
-    const eur = Math.round(num * 0.92);
-    return `€${eur}`;
-  }
-  return `$${Math.round(num)}`;
+  const inDisplayCurrency = convertToDisplay(num, "USD", currency);
+  return formatInCurrency(inDisplayCurrency, currency);
 }
 
 /** Flight detail card shown when user expands the chevron (Emirates-style: depart, duration/stops, arrive; optional per-leg rows). */

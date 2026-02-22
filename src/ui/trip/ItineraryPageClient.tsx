@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import type { ItineraryResult } from "@/domain/itinerary/types";
+import { useState, useEffect, useCallback } from "react";
+import type { ItineraryResult, ItineraryBookingRecord } from "@/domain/itinerary/types";
 import { getCachedResult, clearCachedResult } from "@/ui/trip/itineraryCache";
 import { ItineraryView } from "@/ui/trip/ItineraryView";
 import { Card } from "@/ui/components/Card";
@@ -37,9 +37,19 @@ function fetchAndMergeFlightPrices(
  */
 export function ItineraryPageClient({ id }: ItineraryPageClientProps) {
   const [result, setResult] = useState<ItineraryResult | null>(() => getCachedResult(id) ?? null);
+  const [bookings, setBookings] = useState<ItineraryBookingRecord[]>([]);
   const [loading, setLoading] = useState(!result);
   const [flightPricesLoading, setFlightPricesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const fetchBookings = useCallback(() => {
+    fetch(`/api/itineraries/${id}/bookings`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.bookings) setBookings(data.bookings);
+      })
+      .catch(() => {});
+  }, [id]);
 
   useEffect(() => {
     const cached = getCachedResult(id);
@@ -86,6 +96,10 @@ export function ItineraryPageClient({ id }: ItineraryPageClientProps) {
       .finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    if (result && id) fetchBookings();
+  }, [id, result, fetchBookings]);
+
   if (error) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
@@ -112,6 +126,12 @@ export function ItineraryPageClient({ id }: ItineraryPageClientProps) {
   }
 
   return (
-    <ItineraryView result={result} flightPricesLoading={flightPricesLoading} />
+    <ItineraryView
+      result={result}
+      itineraryId={id}
+      bookings={bookings}
+      onBookingAdded={fetchBookings}
+      flightPricesLoading={flightPricesLoading}
+    />
   );
 }

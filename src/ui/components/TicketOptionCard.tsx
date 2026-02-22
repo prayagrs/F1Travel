@@ -3,38 +3,54 @@
 import { useState } from "react";
 import Image from "next/image";
 import type { TicketOption } from "@/domain/races/types";
-import type { Currency } from "@/ui/components/FlightSearchCard";
+import type { DisplayCurrency } from "@/domain/currency";
+import {
+  convertToDisplay,
+  formatInCurrency,
+  type SourceCurrency,
+} from "@/domain/currency";
 
 type TicketOptionCardProps = {
   option: TicketOption;
-  /** Display currency; when set, price is converted for display to match flight section. */
-  currency?: Currency;
+  /** Display currency; when set, price is converted for display so all amounts use the same currency. */
+  currency?: DisplayCurrency;
 };
 
-/** Parse price string (e.g. "€400", "From €3,500") to number, source currency, and optional "From " prefix. */
+/** Parse price string (e.g. "€400", "From AUD 350", "¥45,000") to number, source currency, and "From " prefix. */
 function parsePrice(
   priceStr: string
-): { value: number; source: "EUR" | "USD"; fromPrefix: boolean } | null {
+): { value: number; source: SourceCurrency; fromPrefix: boolean } | null {
   const fromPrefix = /^From\s+/i.test(priceStr);
   const normalized = priceStr.replace(/,/g, "").replace(/^From\s+/i, "").trim();
-  const eurMatch = normalized.match(/€\s*([\d.]+)/);
-  const usdMatch = normalized.match(/\$\s*([\d.]+)/);
-  if (eurMatch) {
-    const n = Number.parseFloat(eurMatch[1]);
-    return Number.isNaN(n) ? null : { value: n, source: "EUR", fromPrefix };
-  }
-  if (usdMatch) {
-    const n = Number.parseFloat(usdMatch[1]);
-    return Number.isNaN(n) ? null : { value: n, source: "USD", fromPrefix };
+  const patterns: { pattern: RegExp; source: SourceCurrency }[] = [
+    { pattern: /€\s*([\d.]+)/, source: "EUR" },
+    { pattern: /\$\s*([\d.]+)/, source: "USD" },
+    { pattern: /£\s*([\d.]+)/, source: "GBP" },
+    { pattern: /AUD\s*([\d.]+)/i, source: "AUD" },
+    { pattern: /CAD\s*([\d.]+)/i, source: "CAD" },
+    { pattern: /SGD\s*([\d.]+)/i, source: "SGD" },
+    { pattern: /MXN\s*([\d.]+)/i, source: "MXN" },
+    { pattern: /BRL\s*([\d.]+)/i, source: "BRL" },
+    { pattern: /¥\s*([\d.]+)/, source: "JPY" },
+  ];
+  for (const { pattern, source } of patterns) {
+    const m = normalized.match(pattern);
+    if (m) {
+      const n = Number.parseFloat(m[1]);
+      return Number.isNaN(n) ? null : { value: n, source, fromPrefix };
+    }
   }
   return null;
 }
 
-/** Format numeric value in the requested currency (approximate EUR/USD conversion). */
-function formatTicketPrice(value: number, from: "EUR" | "USD", to: Currency): string {
-  if (from === to) return to === "EUR" ? `€${value.toLocaleString()}` : `$${value.toLocaleString()}`;
-  if (to === "USD") return `$${Math.round(value / 0.92).toLocaleString()}`;
-  return `€${Math.round(value * 0.92).toLocaleString()}`;
+/** Format value in display currency; always show "From " when source had it. */
+function formatTicketPrice(
+  value: number,
+  from: SourceCurrency,
+  to: DisplayCurrency
+): string {
+  const converted = convertToDisplay(value, from, to);
+  return formatInCurrency(converted, to);
 }
 
 /** Fallback icon when no logo is provided */

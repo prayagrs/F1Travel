@@ -59,6 +59,18 @@ export type TicketsSection = SectionLinks & {
   options?: TicketOption[];
 };
 
+/** A single curated activity (e.g. tour or experience) from a provider. */
+export type ExperienceActivity = {
+  title: string;
+  href: string;
+  description?: string;
+};
+
+/** Experiences section: provider links plus optional 1–2 activities per provider (keyed by link.label). */
+export type ExperiencesSection = SectionLinks & {
+  providerActivities?: Record<string, ExperienceActivity[]>;
+};
+
 export type ItineraryResult = {
   request: TripRequest;
   race: RaceWeekend;
@@ -66,5 +78,44 @@ export type ItineraryResult = {
   flightsByOption: Record<string, SectionLinks>;
   staysByOption: Record<string, SectionLinks>;
   tickets: TicketsSection;
-  experiences: SectionLinks;
+  experiences: ExperiencesSection;
+};
+
+/** Section filter keys for itinerary view. Default when all true: show all four sections. */
+export const ITINERARY_SECTION_KEYS = ["tickets", "flights", "stays", "experiences"] as const;
+export type ItinerarySectionKey = (typeof ITINERARY_SECTION_KEYS)[number];
+
+export type SectionFilters = Record<ItinerarySectionKey, boolean>;
+
+/** Default: show all sections. */
+export const DEFAULT_SECTION_FILTERS: SectionFilters = {
+  tickets: true,
+  flights: true,
+  stays: true,
+  experiences: true,
+};
+
+/** Booking type for "Add booking" and My Bookings. */
+export const BOOKING_TYPES = ["flight", "stay", "ticket", "activity"] as const;
+export type BookingType = (typeof BOOKING_TYPES)[number];
+
+export type ItineraryBookingRecord = {
+  id: string;
+  itineraryId: string;
+  userId: string;
+  type: BookingType;
+  provider: string;
+  confirmationRef: string;
+  detailsUrl: string | null;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type CreateBookingInput = {
+  type: BookingType;
+  provider: string;
+  confirmationRef: string;
+  detailsUrl?: string | null;
+  notes?: string | null;
 };

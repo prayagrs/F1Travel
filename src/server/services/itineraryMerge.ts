@@ -2,6 +2,7 @@ import { raceRepo } from "@/server/repositories/raceRepo";
 import type { ItineraryRecord } from "@/server/repositories/itineraryRepo";
 import {
   buildTicketsSection,
+  buildExperiencesSection,
   buildFlightsLinks,
   buildStaysLinks,
   getFlightNotesByBudget,
@@ -28,6 +29,9 @@ export function getMergedItineraryResult(itinerary: ItineraryRecord): ItineraryR
   const tickets = currentRace
     ? buildTicketsSection(currentRace)
     : resultJson.tickets;
+  const experiences = currentRace
+    ? buildExperiencesSection(currentRace)
+    : resultJson.experiences;
 
   const stored = resultJson as ItineraryResult;
   const flightsByOption: Record<string, SectionLinks> = {};
@@ -99,7 +103,7 @@ export function getMergedItineraryResult(itinerary: ItineraryRecord): ItineraryR
     Object.assign(staysByOption, stored.staysByOption ?? {});
   }
 
-  return { ...stored, tickets, flightsByOption, staysByOption };
+  return { ...stored, tickets, experiences, flightsByOption, staysByOption };
 }
 
 /**

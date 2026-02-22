@@ -74,8 +74,28 @@ model Itinerary {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings ItineraryBooking[]
 
   @@index([userId, createdAt])
   @@index([raceId])
+}
+
+// User-added booking details (confirmation numbers, provider links) per itinerary
+model ItineraryBooking {
+  id              String   @id @default(cuid())
+  itineraryId     String
+  userId          String // Denormalized for listing "my bookings" without joining Itinerary
+  type            String // "flight" | "stay" | "ticket" | "activity"
+  provider        String
+  confirmationRef String
+  detailsUrl      String?  @db.Text
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  itinerary Itinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([itineraryId])
 }

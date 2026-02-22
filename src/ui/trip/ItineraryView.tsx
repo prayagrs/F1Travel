@@ -1,23 +1,147 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
-import type { ItineraryResult } from "@/domain/itinerary/types";
+import { useSearchParams, useRouter } from "next/navigation";
+import type {
+  ItineraryResult,
+  SectionFilters,
+  ItinerarySectionKey,
+  ItineraryBookingRecord,
+} from "@/domain/itinerary/types";
+import {
+  DEFAULT_SECTION_FILTERS,
+  ITINERARY_SECTION_KEYS,
+} from "@/domain/itinerary/types";
 import { getFlightPriceExpectationLine } from "@/domain/itinerary/linkBuilders";
 import { Card } from "@/ui/components/Card";
 import { DateOptionTabs } from "@/ui/components/DateOptionTabs";
+import { SectionFilterChips } from "@/ui/components/SectionFilterChips";
+import { AddBookingForm } from "@/ui/components/AddBookingForm";
 import { FlightSearchCard, type Currency } from "@/ui/components/FlightSearchCard";
+import { ExperienceProviderCard } from "@/ui/components/ExperienceProviderCard";
 import { StaySearchCard } from "@/ui/components/StaySearchCard";
 import { TicketOptionCard } from "@/ui/components/TicketOptionCard";
 import { getCircuitPath } from "@/ui/components/circuitPaths";
 import { getCircuitSVGConfig } from "@/ui/components/circuitSVGLoader";
 import { getCircuitSvgPath } from "@/ui/components/circuitSvgFiles";
 
+/** Map section key to booking type for filtering. */
+const SECTION_TO_BOOKING_TYPE: Record<
+  "tickets" | "flights" | "stays" | "experiences",
+  ItineraryBookingRecord["type"]
+> = {
+  tickets: "ticket",
+  flights: "flight",
+  stays: "stay",
+  experiences: "activity",
+};
+
 type ItineraryViewProps = {
   result: ItineraryResult;
+  /** Itinerary ID (for booking links and URL updates). */
+  itineraryId?: string;
+  /** User-added bookings for this itinerary. */
+  bookings?: ItineraryBookingRecord[];
+  /** Called after a new booking is added so parent can refetch. */
+  onBookingAdded?: () => void;
   /** True while flight "from" prices are being fetched in the background. */
   flightPricesLoading?: boolean;
 };
+
+function parseSectionFiltersFromSearchParams(
+  searchParams: URLSearchParams
+): SectionFilters {
+  const raw = searchParams.get("sections");
+  if (!raw || raw.trim() === "") {
+    return { ...DEFAULT_SECTION_FILTERS };
+  }
+  const allowed = new Set(raw.split(",").map((s) => s.trim().toLowerCase()));
+  const filters: SectionFilters = { ...DEFAULT_SECTION_FILTERS };
+  for (const key of ITINERARY_SECTION_KEYS) {
+    filters[key] = allowed.has(key);
+  }
+  return filters;
+}
+
+function sectionFiltersToSearchParams(filters: SectionFilters): string {
+  const on = ITINERARY_SECTION_KEYS.filter((k) => filters[k]);
+  if (on.length === ITINERARY_SECTION_KEYS.length) return "";
+  return on.join(",");
+}
+
+/** Renders "Your booking(s)" list and Add booking button/form for one section. */
+function BookingsForSection({
+  sectionKey,
+  bookings,
+  itineraryId,
+  onBookingAdded,
+  addBookingSection,
+  setAddBookingSection,
+}: {
+  sectionKey: ItinerarySectionKey;
+  bookings: ItineraryBookingRecord[];
+  itineraryId?: string;
+  onBookingAdded?: () => void;
+  addBookingSection: ItinerarySectionKey | null;
+  setAddBookingSection: (k: ItinerarySectionKey | null) => void;
+}) {
+  const type = SECTION_TO_BOOKING_TYPE[sectionKey];
+  const sectionBookings = bookings.filter((b) => b.type === type);
+
+  return (
+    <div className="mb-4 space-y-3">
+      {sectionBookings.length > 0 && (
+        <div className="rounded-lg border border-emerald-800/50 bg-emerald-900/20 p-3">
+          <p className="text-xs font-medium text-emerald-400 uppercase tracking-wide mb-2">
+            Your booking(s)
+          </p>
+          <ul className="space-y-2">
+            {sectionBookings.map((b) => (
+              <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span className="text-white font-medium">{b.provider}</span>
+                <span className="text-gray-400 font-mono">{b.confirmationRef}</span>
+                {b.detailsUrl && (
+                  <a
+                    href={b.detailsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-red-400 hover:text-red-300"
+                  >
+                    View on provider →
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {itineraryId && onBookingAdded && (
+        <>
+          {addBookingSection === sectionKey ? (
+            <AddBookingForm
+              itineraryId={itineraryId}
+              type={type}
+              onSuccess={() => {
+                onBookingAdded();
+                setAddBookingSection(null);
+              }}
+              onCancel={() => setAddBookingSection(null)}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAddBookingSection(sectionKey)}
+              className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              + Add booking
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
 
 /** Circuit SVG for the race details card (right side). Uses same assets as CircuitIcon. */
 function RaceCircuitSvg({ raceId }: { raceId: string }) {
@@ -66,7 +190,17 @@ function RaceCircuitSvg({ raceId }: { raceId: string }) {
  * Presentational component that renders an ItineraryResult.
  * Renders deep links as external anchors.
  */
-/** Currency selector for the itinerary page. Placed in the header so it applies to all prices on the page. */
+const CURRENCY_LABELS: Record<Currency, string> = {
+  USD: "USD ($)",
+  EUR: "EUR (€)",
+  GBP: "GBP (£)",
+  AUD: "AUD",
+  CAD: "CAD",
+  JPY: "JPY (¥)",
+  SGD: "SGD",
+};
+
+/** Currency selector for the itinerary page. All prices (tickets, flights) display in the selected currency. */
 function CurrencySelector({
   value,
   onChange,
@@ -83,16 +217,45 @@ function CurrencySelector({
         className="rounded-md border border-gray-600 bg-gray-800 px-3 py-1.5 text-sm font-medium text-white focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
         aria-label="Select currency"
       >
-        <option value="USD">USD ($)</option>
-        <option value="EUR">EUR (€)</option>
+        {Object.entries(CURRENCY_LABELS).map(([code, label]) => (
+          <option key={code} value={code}>
+            {label}
+          </option>
+        ))}
       </select>
     </div>
   );
 }
 
-export function ItineraryView({ result, flightPricesLoading = false }: ItineraryViewProps) {
+export function ItineraryView({
+  result,
+  itineraryId,
+  bookings = [],
+  onBookingAdded,
+  flightPricesLoading = false,
+}: ItineraryViewProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedOption, setSelectedOption] = useState(result.dateOptions[0]?.key || "");
   const [currency, setCurrency] = useState<Currency>("USD");
+  const [addBookingSection, setAddBookingSection] = useState<ItinerarySectionKey | null>(null);
+
+  const sectionFilters = useMemo(
+    () => parseSectionFiltersFromSearchParams(searchParams),
+    [searchParams]
+  );
+
+  const setSectionFilter = useCallback(
+    (key: ItinerarySectionKey, value: boolean) => {
+      const next = { ...sectionFilters, [key]: value };
+      const param = sectionFiltersToSearchParams(next);
+      const nextUrl = new URL(window.location.href);
+      if (param) nextUrl.searchParams.set("sections", param);
+      else nextUrl.searchParams.delete("sections");
+      router.replace(nextUrl.pathname + nextUrl.search, { scroll: false });
+    },
+    [sectionFilters, router]
+  );
 
   const selectedFlights = result.flightsByOption[selectedOption];
   const selectedStays = result.staysByOption[selectedOption];
@@ -160,12 +323,26 @@ export function ItineraryView({ result, flightPricesLoading = false }: Itinerary
             <CurrencySelector value={currency} onChange={setCurrency} />
           </div>
         </div>
-        <hr className="border-t border-gray-700/80 my-0" aria-hidden />
+        <div className="mt-4 px-4">
+          <SectionFilterChips filters={sectionFilters} onChange={setSectionFilter} />
+        </div>
+        {sectionFilters.tickets && (
+        <hr className="border-t border-gray-700/80 my-0 mt-4" aria-hidden />
+        )}
         {/* Race Tickets */}
+        {sectionFilters.tickets && (
         <div className="py-5">
           <h2 className="font-heading text-lg font-semibold text-white mb-3" id="section-tickets">
             {result.tickets.title}
           </h2>
+          <BookingsForSection
+            sectionKey="tickets"
+            bookings={bookings}
+            itineraryId={itineraryId}
+            onBookingAdded={onBookingAdded}
+            addBookingSection={addBookingSection}
+            setAddBookingSection={setAddBookingSection}
+          />
           {result.tickets.options && result.tickets.options.length > 0 ? (
             <div className="space-y-4">
               {result.tickets.options.map((option, index) => (
@@ -196,8 +373,9 @@ export function ItineraryView({ result, flightPricesLoading = false }: Itinerary
             </div>
           )}
         </div>
+        )}
 
-        {selectedFlights && (() => {
+        {sectionFilters.flights && selectedFlights && (() => {
           const selectedDateOption = result.dateOptions.find((o) => o.key === selectedOption);
           const flightSubtitle = selectedDateOption
             ? `From ${result.request.originCity} to ${result.race.city} · ${selectedDateOption.label}`
@@ -210,6 +388,14 @@ export function ItineraryView({ result, flightPricesLoading = false }: Itinerary
                 <h2 className="font-heading text-lg font-semibold text-white mb-3">
                   {selectedFlights.title}
                 </h2>
+                <BookingsForSection
+                  sectionKey="flights"
+                  bookings={bookings}
+                  itineraryId={itineraryId}
+                  onBookingAdded={onBookingAdded}
+                  addBookingSection={addBookingSection}
+                  setAddBookingSection={setAddBookingSection}
+                />
                 {flightPricesLoading && (
                   <p
                     className="text-xs text-gray-500 mb-3"
@@ -236,7 +422,7 @@ export function ItineraryView({ result, flightPricesLoading = false }: Itinerary
           );
         })()}
 
-        {selectedStays && (() => {
+        {sectionFilters.stays && selectedStays && (() => {
           const selectedDateOption = result.dateOptions.find((o) => o.key === selectedOption);
           const staysSubtitle = `Hotels in ${result.race.city} · ${selectedDateOption?.label ?? ""}`;
           return (
@@ -246,6 +432,14 @@ export function ItineraryView({ result, flightPricesLoading = false }: Itinerary
                 <h2 className="font-heading text-lg font-semibold text-white mb-3">
                   {selectedStays.title}
                 </h2>
+                <BookingsForSection
+                  sectionKey="stays"
+                  bookings={bookings}
+                  itineraryId={itineraryId}
+                  onBookingAdded={onBookingAdded}
+                  addBookingSection={addBookingSection}
+                  setAddBookingSection={setAddBookingSection}
+                />
                 <div className="space-y-4">
                   {selectedStays.links.map((link) => (
                     <StaySearchCard
@@ -267,25 +461,34 @@ export function ItineraryView({ result, flightPricesLoading = false }: Itinerary
           );
         })()}
 
+        {sectionFilters.experiences && (
+        <>
         <hr className="border-t border-gray-700/80 my-0" aria-hidden />
         <div className="py-5 last:pb-0" id="section-experiences">
           <h2 className="font-heading text-lg font-semibold text-white mb-3">
             {result.experiences.title}
           </h2>
-          <div className="flex flex-wrap gap-3">
-            {result.experiences.links.map((link, index) => (
-              <a
-                key={index}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-md border border-gray-600 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-200 hover:border-red-600/50 hover:bg-red-600/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 min-h-[44px] items-center justify-center"
-              >
-                {link.label}
-              </a>
+          <BookingsForSection
+            sectionKey="experiences"
+            bookings={bookings}
+            itineraryId={itineraryId}
+            onBookingAdded={onBookingAdded}
+            addBookingSection={addBookingSection}
+            setAddBookingSection={setAddBookingSection}
+          />
+          <div className="space-y-4">
+            {result.experiences.links.map((link) => (
+              <ExperienceProviderCard
+                key={link.label}
+                link={link}
+                subtitle={`Tours & activities in ${result.race.city}`}
+                activities={result.experiences.providerActivities?.[link.label]}
+              />
             ))}
           </div>
         </div>
+        </>
+        )}
       </Card>
     </div>
   );
