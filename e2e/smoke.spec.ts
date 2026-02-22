@@ -4,7 +4,8 @@ test.describe("Smoke", () => {
   test("home page loads and shows main CTA", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveTitle(/F1|Travel|Formula/i);
-    await expect(page.getByRole("link", { name: /plan|trip|get started/i })).toBeVisible();
+    // Single main CTA (aria-label); regex matched 27 links and caused strict mode violation
+    await expect(page.getByRole("link", { name: "Plan your F1 race weekend trip" })).toBeVisible();
   });
 
   test("sample itinerary shows Accommodation section with provider cards", async ({ page }) => {
