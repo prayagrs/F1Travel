@@ -22,7 +22,7 @@ If nothing else works, create a brand new OAuth client:
     GOOGLE_CLIENT_ID=your-new-client-id-here
     GOOGLE_CLIENT_SECRET=your-new-client-secret-here
     NEXTAUTH_URL=http://localhost:3000
-    NEXTAUTH_SECRET=vnOvCqP86VSQcA/cxURg1VjeSj1lFr7vezrurTkuVHc=
+    NEXTAUTH_SECRET=next-auth-secret-key
     ```
 
 11. **Save .env and restart dev server completely** (Ctrl+C, then npm run dev)
