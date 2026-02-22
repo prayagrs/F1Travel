@@ -87,30 +87,7 @@ export function TripForm({ onSubmit }: TripFormProps) {
     ? firstMatch.slice(query.length)
     : "";
 
-  const acceptInlineSuggestion = useCallback(() => {
-    if (!showInlineSuggestion || !firstMatch) return;
-    setFormData((prev) => ({ ...prev, originCity: firstMatch }));
-    validateField("originCity", firstMatch);
-  }, [showInlineSuggestion, firstMatch, validateField]);
-
-  const handleOriginKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Tab" || e.key === "Enter") {
-        if (showInlineSuggestion && firstMatch) {
-          e.preventDefault();
-          acceptInlineSuggestion();
-        }
-      } else if (e.key === "Escape") {
-        if (showInlineSuggestion) {
-          e.preventDefault();
-          originInputRef.current?.blur();
-        }
-      }
-    },
-    [showInlineSuggestion, firstMatch, acceptInlineSuggestion]
-  );
-
-  // Real-time validation (memoized so acceptInlineSuggestion deps are stable)
+  // Real-time validation (memoized so acceptInlineSuggestion deps are stable; must be declared before acceptInlineSuggestion)
   const validateField = useCallback((field: string, value: string | number) => {
     const errors: typeof validationErrors = { ...validationErrors };
 
@@ -151,6 +128,29 @@ export function TripForm({ onSubmit }: TripFormProps) {
 
     setValidationErrors(errors);
   }, [validationErrors]);
+
+  const acceptInlineSuggestion = useCallback(() => {
+    if (!showInlineSuggestion || !firstMatch) return;
+    setFormData((prev) => ({ ...prev, originCity: firstMatch }));
+    validateField("originCity", firstMatch);
+  }, [showInlineSuggestion, firstMatch, validateField]);
+
+  const handleOriginKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Tab" || e.key === "Enter") {
+        if (showInlineSuggestion && firstMatch) {
+          e.preventDefault();
+          acceptInlineSuggestion();
+        }
+      } else if (e.key === "Escape") {
+        if (showInlineSuggestion) {
+          e.preventDefault();
+          originInputRef.current?.blur();
+        }
+      }
+    },
+    [showInlineSuggestion, firstMatch, acceptInlineSuggestion]
+  );
 
   // Check if form is valid
   const isFormValid = () => {
