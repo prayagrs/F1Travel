@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import type {
@@ -24,6 +24,7 @@ import { FlightSearchCard, type Currency } from "@/ui/components/FlightSearchCar
 import { ExperienceProviderCard } from "@/ui/components/ExperienceProviderCard";
 import { StaySearchCard } from "@/ui/components/StaySearchCard";
 import { TicketOptionCard } from "@/ui/components/TicketOptionCard";
+import { PencilIcon, TrashIcon } from "@/ui/components/icons/BookingActionsIcons";
 import { getCircuitPath } from "@/ui/components/circuitPaths";
 import { getCircuitSVGConfig } from "@/ui/components/circuitSVGLoader";
 import { getCircuitSvgPath } from "@/ui/components/circuitSvgFiles";
@@ -101,10 +102,13 @@ function BookingsForSection({
   const type = SECTION_TO_BOOKING_TYPE[sectionKey];
   const sectionBookings = bookings.filter((b) => b.type === type);
   const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
+  const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null);
   const editingBooking = sectionBookings.find((b) => b.id === editingBookingId);
+  const removeConfirmBooking = sectionBookings.find((b) => b.id === removeConfirmId);
 
   async function handleRemove(bookingId: string) {
     if (!onBookingAdded) return;
+    setRemoveConfirmId(null);
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, {
         method: "DELETE",
@@ -131,18 +135,18 @@ function BookingsForSection({
               <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span className="text-white font-medium">{b.provider}</span>
                 <span className="text-gray-400 font-mono">{b.confirmationRef}</span>
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-1">
                   {b.detailsUrl && (
                     <a
                       href={b.detailsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-red-400 hover:text-red-300"
+                      className="text-red-400 hover:text-red-300 text-xs font-medium"
                     >
                       View on provider →
                     </a>
                   )}
-                  {itineraryId && onBookingAdded && (
+                  {itineraryId && onBookingAdded && removeConfirmId !== b.id && (
                     <>
                       <button
                         type="button"
@@ -150,24 +154,49 @@ function BookingsForSection({
                           setEditingBookingId(b.id);
                           setAddBookingSection(sectionKey);
                         }}
-                        className="text-gray-400 hover:text-white text-xs font-medium"
+                        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded p-2 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                        aria-label={`Edit ${b.provider} booking`}
                       >
-                        Edit
+                        <PencilIcon />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRemoveConfirmId(b.id)}
+                        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded p-2 text-red-400 hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                        aria-label={`Remove ${b.provider} booking`}
+                      >
+                        <TrashIcon />
+                      </button>
+                    </>
+                  )}
+                  {itineraryId && onBookingAdded && removeConfirmId === b.id && (
+                    <span className="flex items-center gap-2 text-xs">
+                      <span className="text-gray-400">Remove this booking?</span>
+                      <button
+                        type="button"
+                        onClick={() => setRemoveConfirmId(null)}
+                        className="rounded border border-gray-600 px-2 py-1 text-gray-300 hover:bg-gray-700"
+                      >
+                        Cancel
                       </button>
                       <button
                         type="button"
                         onClick={() => handleRemove(b.id)}
-                        className="text-red-400 hover:text-red-300 text-xs font-medium"
-                        aria-label={`Remove ${b.provider} booking`}
+                        className="rounded bg-red-600 px-2 py-1 text-white hover:bg-red-700"
                       >
                         Remove
                       </button>
-                    </>
+                    </span>
                   )}
                 </span>
               </li>
             ))}
           </ul>
+          {removeConfirmBooking && (
+            <p className="mt-2 text-xs text-gray-500">
+              You can add it again later from this section.
+            </p>
+          )}
         </div>
       )}
       {itineraryId && onBookingAdded && (
@@ -345,6 +374,25 @@ export function ItineraryView({
     [searchParams]
   );
 
+  /** When user returns from partner (?return=stay etc.), always show that section so the Add booking form is visible. */
+  const effectiveSectionFilters = useMemo(
+    () =>
+      sectionFromReturn
+        ? { ...sectionFilters, [sectionFromReturn]: true }
+        : sectionFilters,
+    [sectionFilters, sectionFromReturn]
+  );
+
+  /** Scroll to the section when landing with ?return= so the Add booking form is in view (one-click flow). */
+  useEffect(() => {
+    if (!sectionFromReturn) return;
+    const id = `section-${sectionFromReturn}`;
+    const timer = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [sectionFromReturn]);
+
   const setSectionFilter = useCallback(
     (key: ItinerarySectionKey, value: boolean) => {
       const next = { ...sectionFilters, [key]: value };
@@ -426,16 +474,18 @@ export function ItineraryView({
         <div className="mt-4 px-4">
           <SectionFilterChips filters={sectionFilters} onChange={setSectionFilter} />
         </div>
-        {sectionFilters.tickets && (
+        {effectiveSectionFilters.tickets && (
         <hr className="border-t border-gray-700/80 my-0 mt-4" aria-hidden />
         )}
         {/* Race Tickets */}
-        {sectionFilters.tickets && (
+        {effectiveSectionFilters.tickets && (
         <div className="py-5">
           <h2 className="font-heading text-lg font-semibold text-white mb-1" id="section-tickets">
             {result.tickets.title}
           </h2>
           <p className="text-sm text-gray-400 mb-3">One tap to search and book on your chosen provider.</p>
+          <p className="text-xs text-gray-500 mb-3">External links. We may earn a fee when you book via some links—price unchanged.</p>
+          <p className="text-xs text-gray-500 mb-3">Details are from you or your confirmation—always verify with your booking provider.</p>
           <BookingsForSection
             sectionKey="tickets"
             bookings={bookings}
@@ -482,7 +532,7 @@ export function ItineraryView({
         </div>
         )}
 
-        {sectionFilters.flights && selectedFlights && (() => {
+        {effectiveSectionFilters.flights && selectedFlights && (() => {
           const selectedDateOption = result.dateOptions.find((o) => o.key === selectedOption);
           const flightSubtitle = selectedDateOption
             ? `From ${result.request.originCity} to ${result.race.city} · ${selectedDateOption.label}`
@@ -496,6 +546,8 @@ export function ItineraryView({
                   {selectedFlights.title}
                 </h2>
                 <p className="text-sm text-gray-400 mb-3">One tap to search and book on your chosen provider.</p>
+                <p className="text-xs text-gray-500 mb-3">External links. We may earn a fee when you book via some links—price unchanged.</p>
+                <p className="text-xs text-gray-500 mb-3">Details are from you or your confirmation—always verify with your booking provider.</p>
                 <BookingsForSection
                   sectionKey="flights"
                   bookings={bookings}
@@ -532,7 +584,7 @@ export function ItineraryView({
           );
         })()}
 
-        {sectionFilters.stays && selectedStays && (() => {
+        {effectiveSectionFilters.stays && selectedStays && (() => {
           const selectedDateOption = result.dateOptions.find((o) => o.key === selectedOption);
           const staysSubtitle = `Hotels in ${result.race.city} · ${selectedDateOption?.label ?? ""}`;
           return (
@@ -543,6 +595,9 @@ export function ItineraryView({
                   {selectedStays.title}
                 </h2>
                 <p className="text-sm text-gray-400 mb-3">One tap to search and book on your chosen provider.</p>
+                <p className="text-xs text-gray-500 mb-3">External links. We may earn a fee when you book via some links—price unchanged.</p>
+                <p className="text-xs text-gray-500 mb-3">Details are from you or your confirmation—always verify with your booking provider.</p>
+                <p className="text-sm text-gray-400 mb-3">Booking opens in a new tab. When you&apos;re done, come back to this tab to add your confirmation number.</p>
                 <BookingsForSection
                   sectionKey="stays"
                   bookings={bookings}
@@ -571,6 +626,7 @@ export function ItineraryView({
                         link={{ ...link, href }}
                         subtitle={staysSubtitle}
                         ctaLabel={link.isAffiliate ? "Search & book" : "Search"}
+                        recommendedLabel={link.label === "Booking.com" ? "Recommended" : undefined}
                       />
                     );
                   })}
@@ -587,7 +643,7 @@ export function ItineraryView({
           );
         })()}
 
-        {sectionFilters.experiences && (
+        {effectiveSectionFilters.experiences && (
         <>
         <hr className="border-t border-gray-700/80 my-0" aria-hidden />
         <div className="py-5 last:pb-0" id="section-experiences">
@@ -595,6 +651,8 @@ export function ItineraryView({
             {result.experiences.title}
           </h2>
           <p className="text-sm text-gray-400 mb-3">One tap to search and book on your chosen provider.</p>
+          <p className="text-xs text-gray-500 mb-3">External links. We may earn a fee when you book via some links—price unchanged.</p>
+          <p className="text-xs text-gray-500 mb-3">Details are from you or your confirmation—always verify with your booking provider.</p>
           <BookingsForSection
             sectionKey="experiences"
             bookings={bookings}

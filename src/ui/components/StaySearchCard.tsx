@@ -5,6 +5,8 @@ type StaySearchCardProps = {
   link: ProviderLink;
   subtitle: string;
   ctaLabel?: string;
+  /** Optional label for one-click primary path (e.g. "Recommended"). */
+  recommendedLabel?: string;
 };
 
 /** Fallback icon when no logo: building/accommodation (same size as FlightSearchCard fallback). */
@@ -35,6 +37,7 @@ export function StaySearchCard({
   link,
   subtitle,
   ctaLabel = "Search",
+  recommendedLabel,
 }: StaySearchCardProps) {
   return (
     <div className="flex flex-col rounded-lg border border-gray-700 bg-gray-800/50 transition-colors hover:border-gray-600">
@@ -59,6 +62,11 @@ export function StaySearchCard({
               {link.isAffiliate && (
                 <span className="ml-2 text-xs font-normal text-gray-500" aria-label="Partner link">
                   Partner
+                </span>
+              )}
+              {recommendedLabel && (
+                <span className="ml-2 text-xs font-normal text-emerald-400" aria-label="Recommended option">
+                  {recommendedLabel}
                 </span>
               )}
             </p>

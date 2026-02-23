@@ -20,6 +20,9 @@ const SKYSCANNER_PARTNER_ID = typeof process !== "undefined" ? process.env.SKYSC
 const VIATOR_PARTNER_ID = typeof process !== "undefined" ? process.env.VIATOR_PARTNER_ID : undefined;
 /** GetYourGuide partner ID. Only appended when set. */
 const GETYOURGUIDE_PARTNER_ID = typeof process !== "undefined" ? process.env.GETYOURGUIDE_PARTNER_ID : undefined;
+/** When true, show "Partner" label for affiliate-capable providers even without env set. UI demo only; do not use in production. */
+const AFFILIATE_LABELS_DEMO =
+  typeof process !== "undefined" && process.env.NEXT_PUBLIC_AFFILIATE_LABELS_DEMO === "true";
 
 /**
  * Appends an optional affiliate param to a URL. Uses ? or & as needed.
@@ -277,7 +280,7 @@ export function buildFlightsLinks(
     kayakUrl.search = kayakCacheBust;
   }
 
-  const skyscannerAffiliate = Boolean(SKYSCANNER_PARTNER_ID?.trim());
+  const skyscannerAffiliate = Boolean(SKYSCANNER_PARTNER_ID?.trim()) || AFFILIATE_LABELS_DEMO;
   return [
     {
       label: "Google Flights",
@@ -328,7 +331,7 @@ export function buildStaysLinks(
   googleHotelsUrl.searchParams.set("checkin", departDateISO);
   googleHotelsUrl.searchParams.set("checkout", returnDateISO);
 
-  const bookingAffiliate = Boolean(BOOKING_AFFILIATE_AID?.trim());
+  const bookingAffiliate = Boolean(BOOKING_AFFILIATE_AID?.trim()) || AFFILIATE_LABELS_DEMO;
   return [
     {
       label: "Booking.com",
@@ -359,7 +362,7 @@ export function buildTicketsLinks(race: {
 }): ProviderLink[] {
   const links: ProviderLink[] = [];
 
-  const f1Affiliate = Boolean(F1_TICKETS_AFFILIATE_PARAM?.trim());
+  const f1Affiliate = Boolean(F1_TICKETS_AFFILIATE_PARAM?.trim()) || AFFILIATE_LABELS_DEMO;
   if (race.officialTicketsUrl) {
     links.push({
       label: "Official F1 Tickets",
@@ -424,8 +427,8 @@ export function buildExperiencesLinks(race: { city: string; country: string }): 
   const tripAdvisorUrl = new URL("https://www.tripadvisor.com/Search");
   tripAdvisorUrl.searchParams.set("q", `${race.city} things to do`);
 
-  const gygAffiliate = Boolean(GETYOURGUIDE_PARTNER_ID?.trim());
-  const viatorAffiliate = Boolean(VIATOR_PARTNER_ID?.trim());
+  const gygAffiliate = Boolean(GETYOURGUIDE_PARTNER_ID?.trim()) || AFFILIATE_LABELS_DEMO;
+  const viatorAffiliate = Boolean(VIATOR_PARTNER_ID?.trim()) || AFFILIATE_LABELS_DEMO;
   return [
     {
       label: "GetYourGuide",
