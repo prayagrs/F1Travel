@@ -8,7 +8,7 @@ import type {
   TicketsSection,
 } from "./types";
 import type { RaceWeekend } from "../races/types";
-import type { TicketOption } from "../races/types";
+import type { TicketOption, StayOption } from "../races/types";
 
 /** Optional affiliate/partner query string for official F1 ticket URLs (e.g. "partner=xyz"). Only appended when set. */
 const F1_TICKETS_AFFILIATE_PARAM = typeof process !== "undefined" ? process.env.F1_TICKETS_AFFILIATE_PARAM : undefined;
@@ -67,6 +67,24 @@ export function appendReturnUrlToHref(
   } catch {
     return href;
   }
+}
+
+/** Provider labels per booking type for Add Booking form dropdown. */
+export const PROVIDER_LABELS_BY_TYPE: Record<
+  "flight" | "stay" | "ticket" | "activity",
+  string[]
+> = {
+  flight: ["Google Flights", "Skyscanner", "Kayak"],
+  stay: ["Booking.com", "Airbnb", "Google Hotels"],
+  ticket: ["Official F1 Tickets", "Other ticket sources", "Search Circuit Tickets"],
+  activity: ["GetYourGuide", "Viator", "TripAdvisor"],
+};
+
+/** Returns provider labels for the Add Booking form dropdown. */
+export function getProviderLabels(
+  type: "flight" | "stay" | "ticket" | "activity"
+): string[] {
+  return [...PROVIDER_LABELS_BY_TYPE[type], "Other"];
 }
 
 /** True when href is the official F1 ticket site (tickets.formula1.com). */
@@ -350,6 +368,44 @@ export function buildStaysLinks(
       logo: "/logos/google.svg",
     },
   ];
+}
+
+/** Injects check-in/check-out dates into a stay option href (Booking.com, etc.). */
+function injectDatesIntoStayHref(
+  href: string,
+  checkIn: string,
+  checkOut: string
+): string {
+  try {
+    const u = new URL(href);
+    u.searchParams.set("checkin", checkIn);
+    u.searchParams.set("checkout", checkOut);
+    return u.toString();
+  } catch {
+    return href;
+  }
+}
+
+/** Builds stays section with links and optional curated stay options (dates injected). */
+export function buildStaysSection(
+  race: RaceWeekend,
+  dateOption: DateOption,
+  budgetTier: BudgetTier
+): { title: string; links: ProviderLink[]; notes?: string[]; options?: StayOption[] } {
+  const links = buildStaysLinks(race, dateOption);
+  const { departDateISO, returnDateISO } = dateOption;
+  const options = race.stayOptions?.map((opt) => ({
+    ...opt,
+    href: injectDatesIntoStayHref(opt.href, departDateISO, returnDateISO),
+    checkIn: departDateISO,
+    checkOut: returnDateISO,
+  }));
+  return {
+    title: "Accommodation",
+    links,
+    notes: getNeighborhoodTipsByBudget(budgetTier),
+    ...(options && options.length > 0 ? { options } : {}),
+  };
 }
 
 /**

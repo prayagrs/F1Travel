@@ -1,4 +1,19 @@
 /**
+ * A single curated stay/accommodation option from a source (Booking.com, Airbnb, etc.)
+ */
+export type StayOption = {
+  source: string;
+  sourceLogo?: string;
+  name: string;
+  address?: string;
+  price: string;
+  checkIn?: string;
+  checkOut?: string;
+  href: string;
+  notes?: string[];
+};
+
+/**
  * A single ticket option from a specific source (Official F1, circuit promoter, etc.)
  */
 export type TicketOption = {
@@ -46,6 +61,8 @@ export type RaceWeekend = {
   otherTicketsUrl?: string;
   /** Curated ticket options with price, stand, and source for card display */
   ticketOptions?: TicketOption[];
+  /** Curated stay options with name, price, source for card display */
+  stayOptions?: StayOption[];
   /** Curated 1–2 activities per experience provider (GetYourGuide, Viator, TripAdvisor). */
   experienceOptions?: RaceExperienceOption[];
 };

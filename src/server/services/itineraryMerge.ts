@@ -4,12 +4,11 @@ import {
   buildTicketsSection,
   buildExperiencesSection,
   buildFlightsLinks,
-  buildStaysLinks,
+  buildStaysSection,
   getFlightNotesByBudget,
-  getNeighborhoodTipsByBudget,
 } from "@/domain/itinerary/linkBuilders";
 import { generateDateOptions } from "@/domain/itinerary/dateOptions";
-import type { DateOption, ItineraryResult, SectionLinks, TripRequest } from "@/domain/itinerary/types";
+import type { DateOption, ItineraryResult, SectionLinks, StaysSection, TripRequest } from "@/domain/itinerary/types";
 import type { RaceWeekend } from "@/domain/races/types";
 import { getFlightPricesForOptions } from "@/server/services/flightPrices";
 
@@ -75,10 +74,11 @@ export function getMergedItineraryResult(itinerary: ItineraryRecord): ItineraryR
     Object.assign(flightsByOption, stored.flightsByOption ?? {});
   }
 
-  // Rebuild staysByOption (with logos) from stored race + date options, same pattern as flights
-  const staysByOption: Record<string, SectionLinks> = {};
+  // Rebuild staysByOption (with logos and options) from stored race + date options, same pattern as flights
+  const staysByOption: Record<string, StaysSection> = {};
   if (stored.dateOptions?.length && stored.race) {
     const raceForStays = currentRace ? { ...stored.race, ...currentRace } : stored.race;
+    const budgetTier = stored.request?.budgetTier ?? "$$";
     for (const dateOption of stored.dateOptions) {
       const raw = dateOption as Record<string, unknown>;
       const departStr = raw.departDateISO ?? raw.depart_date_iso;
@@ -92,12 +92,7 @@ export function getMergedItineraryResult(itinerary: ItineraryRecord): ItineraryR
         departDateISO: departStr,
         returnDateISO: returnStr,
       };
-      const links = buildStaysLinks(raceForStays, normalizedOption);
-      staysByOption[dateOption.key] = {
-        title: "Accommodation",
-        links,
-        notes: getNeighborhoodTipsByBudget(stored.request?.budgetTier ?? "$$"),
-      };
+      staysByOption[dateOption.key] = buildStaysSection(raceForStays, normalizedOption, budgetTier);
     }
   } else {
     Object.assign(staysByOption, stored.staysByOption ?? {});

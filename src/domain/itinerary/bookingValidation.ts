@@ -8,8 +8,8 @@ const PROVIDER_MAX = 100;
 const CONFIRMATION_REF_MAX = 100;
 const NOTES_MAX = 500;
 
-/** Allowed characters for confirmation ref: letters, numbers, spaces, hyphens. */
-const CONFIRMATION_REF_REGEX = /^[A-Za-z0-9\s\-]+$/;
+/** Allowed characters for confirmation ref. Stay/accommodation often use longer alphanumeric. */
+const CONFIRMATION_REF_REGEX = /^[A-Za-z0-9\s\-_]+$/;
 
 function isValidHttpUrl(s: string): boolean {
   const trimmed = s.trim();
@@ -54,7 +54,7 @@ export function validateBookingInput(input: ValidateBookingInput): string | null
     return "Confirmation number is too long.";
   }
   if (!CONFIRMATION_REF_REGEX.test(confirmationTrim)) {
-    return "Use only letters, numbers, and hyphens for the confirmation number.";
+    return "Use only letters, numbers, hyphens, and underscores for the confirmation number.";
   }
   const details = detailsUrl?.trim();
   if (details && !isValidHttpUrl(details)) {

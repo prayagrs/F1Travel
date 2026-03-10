@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { raceRepo } from "@/server/repositories/raceRepo";
 import { buildItinerary } from "@/domain/itinerary/itineraryBuilder";
 import { SampleItineraryClient } from "@/ui/trip/SampleItineraryClient";
@@ -72,7 +73,9 @@ export default async function SampleItineraryPage() {
       </Card>
 
       {/* Render the sample itinerary; flight prices load in background */}
-      <SampleItineraryClient initialResult={sampleItinerary} />
+      <Suspense fallback={<div className="animate-pulse h-96 bg-gray-800/30 rounded-lg" />}>
+        <SampleItineraryClient initialResult={sampleItinerary} />
+      </Suspense>
     </div>
   );
 }

@@ -24,7 +24,10 @@ import { FlightSearchCard, type Currency } from "@/ui/components/FlightSearchCar
 import { ExperienceProviderCard } from "@/ui/components/ExperienceProviderCard";
 import { StaySearchCard } from "@/ui/components/StaySearchCard";
 import { TicketOptionCard } from "@/ui/components/TicketOptionCard";
+import { StayOptionCard } from "@/ui/components/StayOptionCard";
+import { TicketSourceFilterChips } from "@/ui/components/TicketSourceFilterChips";
 import { PencilIcon, TrashIcon } from "@/ui/components/icons/BookingActionsIcons";
+import { parseNotesToBadges, hasLongNotes } from "@/domain/itinerary/bookingNotes";
 import { getCircuitPath } from "@/ui/components/circuitPaths";
 import { getCircuitSVGConfig } from "@/ui/components/circuitSVGLoader";
 import { getCircuitSvgPath } from "@/ui/components/circuitSvgFiles";
@@ -73,10 +76,10 @@ function sectionFiltersToSearchParams(filters: SectionFilters): string {
   return on.join(",");
 }
 
-/** Pre-fill values when user lands with ?return=stay|ticket|flight|activity. */
-const RETURN_PREFILL: Record<ItinerarySectionKey, AddBookingPreFill | undefined> = {
+/** Base pre-fill when user lands with ?return=stay|ticket|flight|activity. */
+const RETURN_PREFILL_BASE: Record<ItinerarySectionKey, AddBookingPreFill> = {
   stays: { provider: "Booking.com" },
-  tickets: { provider: "Official F1" },
+  tickets: { provider: "Official F1 Tickets" },
   flights: { provider: "Google Flights" },
   experiences: { provider: "GetYourGuide" },
 };
@@ -130,66 +133,19 @@ function BookingsForSection({
           <p className="text-xs font-medium text-emerald-400 uppercase tracking-wide mb-2">
             Your booking(s)
           </p>
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {sectionBookings.map((b) => (
-              <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                <span className="text-white font-medium">{b.provider}</span>
-                <span className="text-gray-400 font-mono">{b.confirmationRef}</span>
-                <span className="flex items-center gap-1">
-                  {b.detailsUrl && (
-                    <a
-                      href={b.detailsUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-red-400 hover:text-red-300 text-xs font-medium"
-                    >
-                      View on provider →
-                    </a>
-                  )}
-                  {itineraryId && onBookingAdded && removeConfirmId !== b.id && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingBookingId(b.id);
-                          setAddBookingSection(sectionKey);
-                        }}
-                        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded p-2 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900"
-                        aria-label={`Edit ${b.provider} booking`}
-                      >
-                        <PencilIcon />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRemoveConfirmId(b.id)}
-                        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded p-2 text-red-400 hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900"
-                        aria-label={`Remove ${b.provider} booking`}
-                      >
-                        <TrashIcon />
-                      </button>
-                    </>
-                  )}
-                  {itineraryId && onBookingAdded && removeConfirmId === b.id && (
-                    <span className="flex items-center gap-2 text-xs">
-                      <span className="text-gray-400">Remove this booking?</span>
-                      <button
-                        type="button"
-                        onClick={() => setRemoveConfirmId(null)}
-                        className="rounded border border-gray-600 px-2 py-1 text-gray-300 hover:bg-gray-700"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(b.id)}
-                        className="rounded bg-red-600 px-2 py-1 text-white hover:bg-red-700"
-                      >
-                        Remove
-                      </button>
-                    </span>
-                  )}
-                </span>
-              </li>
+              <BookingCard
+                key={b.id}
+                booking={b}
+                sectionKey={sectionKey}
+                itineraryId={itineraryId}
+                onBookingAdded={onBookingAdded}
+                removeConfirmId={removeConfirmId}
+                setRemoveConfirmId={setRemoveConfirmId}
+                setEditingBookingId={setEditingBookingId}
+                setAddBookingSection={setAddBookingSection}
+              />
             ))}
           </ul>
           {removeConfirmBooking && (
@@ -199,52 +155,183 @@ function BookingsForSection({
           )}
         </div>
       )}
-      {itineraryId && onBookingAdded && (
-        <>
-          {addBookingSection === sectionKey ? (
-            <>
-              {preFill?.provider && (
-                <p className="text-sm text-gray-400 mb-2">
-                  Add your confirmation from {preFill.provider}.
-                </p>
-              )}
-              {editingBooking ? (
-                <AddBookingForm
-                  itineraryId={itineraryId}
-                  type={type}
-                  booking={editingBooking}
-                  onSuccess={() => {
-                    onBookingAdded();
-                    setEditingBookingId(null);
-                  }}
-                  onCancel={() => setEditingBookingId(null)}
-                  preFill={preFill}
-                />
-              ) : (
-                <AddBookingForm
-                  itineraryId={itineraryId}
-                  type={type}
-                  onSuccess={() => {
-                    onBookingAdded();
-                    setAddBookingSection(null);
-                  }}
-                  onCancel={() => setAddBookingSection(null)}
-                  preFill={preFill}
-                />
-              )}
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setAddBookingSection(sectionKey)}
-              className="rounded-md border border-gray-600 px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              + Add booking
-            </button>
-          )}
-        </>
-      )}
+      {itineraryId && onBookingAdded ? (
+        addBookingSection === sectionKey ? (
+          <div className="space-y-2">
+            {preFill?.provider && (
+              <p className="text-sm text-gray-400 mb-2">
+                Add your confirmation from {preFill.provider}.
+              </p>
+            )}
+            {editingBooking ? (
+              <AddBookingForm
+                itineraryId={itineraryId}
+                type={type}
+                booking={editingBooking}
+                onSuccess={() => {
+                  onBookingAdded();
+                  setEditingBookingId(null);
+                }}
+                onCancel={() => setEditingBookingId(null)}
+                preFill={preFill}
+              />
+            ) : (
+              <AddBookingForm
+                itineraryId={itineraryId}
+                type={type}
+                onSuccess={() => {
+                  onBookingAdded();
+                  setAddBookingSection(null);
+                }}
+                onCancel={() => setAddBookingSection(null)}
+                preFill={preFill}
+              />
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setAddBookingSection(sectionKey)}
+            className="rounded-md border border-dashed border-gray-600 px-3 py-2 text-sm font-medium text-gray-400 hover:border-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+          >
+            + Add booking
+          </button>
+        )
+      ) : null}
     </div>
+  );
+}
+
+/** Single booking card with provider, confirmation, notes badges, and actions. */
+function BookingCard({
+  booking: b,
+  sectionKey,
+  itineraryId,
+  onBookingAdded,
+  removeConfirmId,
+  setRemoveConfirmId,
+  setEditingBookingId,
+  setAddBookingSection,
+}: {
+  booking: ItineraryBookingRecord;
+  sectionKey: ItinerarySectionKey;
+  itineraryId?: string;
+  onBookingAdded?: () => void;
+  removeConfirmId: string | null;
+  setRemoveConfirmId: (id: string | null) => void;
+  setEditingBookingId: (id: string | null) => void;
+  setAddBookingSection: (k: ItinerarySectionKey | null) => void;
+}) {
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const badges = parseNotesToBadges(b.notes);
+  const showCollapsible = hasLongNotes(b.notes);
+
+  async function handleRemove(bookingId: string) {
+    if (!onBookingAdded) return;
+    setRemoveConfirmId(null);
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setEditingBookingId(null);
+        onBookingAdded();
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return (
+    <li className="flex flex-col gap-2 rounded border border-gray-700/50 bg-gray-800/30 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-white font-medium">{b.provider}</span>
+          <span className="text-gray-400 font-mono text-xs">{b.confirmationRef}</span>
+        </div>
+        <span className="flex items-center gap-1">
+          {b.detailsUrl && (
+            <a
+              href={b.detailsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-red-400 hover:text-red-300 text-xs font-medium"
+            >
+              View on provider →
+            </a>
+          )}
+          {itineraryId && onBookingAdded && removeConfirmId !== b.id && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingBookingId(b.id);
+                  setAddBookingSection(sectionKey);
+                }}
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded p-2 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                aria-label={`Edit ${b.provider} booking`}
+              >
+                <PencilIcon />
+              </button>
+              <button
+                type="button"
+                onClick={() => setRemoveConfirmId(b.id)}
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded p-2 text-red-400 hover:text-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                aria-label={`Remove ${b.provider} booking`}
+              >
+                <TrashIcon />
+              </button>
+            </>
+          )}
+          {itineraryId && onBookingAdded && removeConfirmId === b.id && (
+            <span className="flex items-center gap-2 text-xs">
+              <span className="text-gray-400">Remove this booking?</span>
+              <button
+                type="button"
+                onClick={() => setRemoveConfirmId(null)}
+                className="rounded border border-gray-600 px-2 py-1 text-gray-300 hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRemove(b.id)}
+                className="rounded bg-red-600 px-2 py-1 text-white hover:bg-red-700"
+              >
+                Remove
+              </button>
+            </span>
+          )}
+        </span>
+      </div>
+      {badges.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {badges.map((badge, i) => (
+            <span
+              key={i}
+              className="inline-flex rounded bg-gray-700/80 px-2 py-0.5 text-xs text-gray-300"
+            >
+              {badge}
+            </span>
+          ))}
+        </div>
+      )}
+      {showCollapsible && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setDetailsExpanded((e) => !e)}
+            className="text-xs text-gray-400 hover:text-gray-300 underline"
+          >
+            {detailsExpanded ? "Hide details" : "Show details"}
+          </button>
+          {detailsExpanded && (
+            <p className="mt-1 text-xs text-gray-400 whitespace-pre-wrap">{b.notes}</p>
+          )}
+        </div>
+      )}
+    </li>
   );
 }
 
@@ -344,6 +431,7 @@ export function ItineraryView({
   const [selectedOption, setSelectedOption] = useState(result.dateOptions[0]?.key || "");
   const [currency, setCurrency] = useState<Currency>("USD");
   const [userAddBookingSection, setUserAddBookingSection] = useState<ItinerarySectionKey | null>(null);
+  const [ticketSourceFilter, setTicketSourceFilter] = useState<string | null>(null);
 
   const returnParam = searchParams.get("return");
   const sectionFromReturn = useMemo(() => {
@@ -356,6 +444,17 @@ export function ItineraryView({
     };
     return map[returnParam.toLowerCase()] ?? null;
   }, [returnParam]);
+  const returnPreFill = useMemo((): AddBookingPreFill | undefined => {
+    if (!sectionFromReturn) return undefined;
+    const base = RETURN_PREFILL_BASE[sectionFromReturn];
+    const confirmation = searchParams.get("confirmation");
+    const detailsUrl = searchParams.get("detailsUrl");
+    return {
+      ...base,
+      ...(confirmation && { confirmationRef: confirmation }),
+      ...(detailsUrl && { detailsUrl }),
+    };
+  }, [sectionFromReturn, searchParams]);
   const addBookingSection = sectionFromReturn ?? userAddBookingSection;
   const setAddBookingSection = useCallback(
     (k: ItinerarySectionKey | null) => {
@@ -493,13 +592,20 @@ export function ItineraryView({
             onBookingAdded={onBookingAdded}
             addBookingSection={addBookingSection}
             setAddBookingSection={setAddBookingSection}
-            preFill={returnParam ? RETURN_PREFILL.tickets : undefined}
+            preFill={sectionFromReturn === "tickets" ? returnPreFill : undefined}
           />
           {result.tickets.options && result.tickets.options.length > 0 ? (
             <div className="space-y-4">
-              {result.tickets.options.map((option, index) => (
-                <TicketOptionCard key={index} option={option} currency={currency} />
-              ))}
+              <TicketSourceFilterChips
+                sources={[...new Set(result.tickets.options.map((o) => o.source))]}
+                selected={ticketSourceFilter}
+                onChange={setTicketSourceFilter}
+              />
+              {result.tickets.options
+                .filter((o) => !ticketSourceFilter || o.source === ticketSourceFilter)
+                .map((option, index) => (
+                  <TicketOptionCard key={index} option={option} currency={currency} />
+                ))}
               <p className="text-sm text-gray-400">
                 Prices shown are indicative—verify with provider. Official and reseller prices vary by grandstand and circuit.
               </p>
@@ -555,7 +661,7 @@ export function ItineraryView({
                   onBookingAdded={onBookingAdded}
                   addBookingSection={addBookingSection}
                   setAddBookingSection={setAddBookingSection}
-                  preFill={returnParam ? RETURN_PREFILL.flights : undefined}
+                  preFill={sectionFromReturn === "flights" ? returnPreFill : undefined}
                 />
                 {flightPricesLoading && (
                   <p
@@ -605,39 +711,62 @@ export function ItineraryView({
                   onBookingAdded={onBookingAdded}
                   addBookingSection={addBookingSection}
                   setAddBookingSection={setAddBookingSection}
-                  preFill={returnParam ? RETURN_PREFILL.stays : undefined}
+                  preFill={sectionFromReturn === "stays" ? returnPreFill : undefined}
                 />
-                <div className="space-y-4">
-                  {selectedStays.links.map((link) => {
-                    const href =
-                      link.label === "Booking.com" &&
-                      itineraryId &&
-                      typeof window !== "undefined"
-                        ? appendReturnUrlToHref(
-                            link.href,
-                            window.location.origin,
-                            itineraryId,
-                            "stay"
-                          )
-                        : link.href;
-                    return (
-                      <StaySearchCard
-                        key={link.href}
-                        link={{ ...link, href }}
-                        subtitle={staysSubtitle}
-                        ctaLabel={link.isAffiliate ? "Search & book" : "Search"}
-                        recommendedLabel={link.label === "Booking.com" ? "Recommended" : undefined}
+                {selectedStays.options && selectedStays.options.length > 0 ? (
+                  <div className="space-y-4">
+                    {selectedStays.options.map((option, index) => (
+                      <StayOptionCard
+                        key={index}
+                        option={option}
+                        currency={currency}
+                        dateLabel={selectedDateOption?.label}
                       />
-                    );
-                  })}
-                  {selectedStays.notes && selectedStays.notes.length > 0 && (
-                    <ul className="space-y-1 text-sm text-gray-400">
-                      {selectedStays.notes.map((note, index) => (
-                        <li key={index}>• {note}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                    ))}
+                    <p className="text-sm text-gray-400">
+                      Prices shown are indicative—verify with provider. Dates match your selected itinerary.
+                    </p>
+                    {selectedStays.notes && selectedStays.notes.length > 0 && (
+                      <ul className="space-y-1 text-sm text-gray-400">
+                        {selectedStays.notes.map((note, index) => (
+                          <li key={index}>• {note}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {selectedStays.links.map((link) => {
+                      const href =
+                        link.label === "Booking.com" &&
+                        itineraryId &&
+                        typeof window !== "undefined"
+                          ? appendReturnUrlToHref(
+                              link.href,
+                              window.location.origin,
+                              itineraryId,
+                              "stay"
+                            )
+                          : link.href;
+                      return (
+                        <StaySearchCard
+                          key={link.href}
+                          link={{ ...link, href }}
+                          subtitle={staysSubtitle}
+                          ctaLabel={link.isAffiliate ? "Search & book" : "Search"}
+                          recommendedLabel={link.label === "Booking.com" ? "Recommended" : undefined}
+                        />
+                      );
+                    })}
+                    {selectedStays.notes && selectedStays.notes.length > 0 && (
+                      <ul className="space-y-1 text-sm text-gray-400">
+                        {selectedStays.notes.map((note, index) => (
+                          <li key={index}>• {note}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           );
@@ -660,7 +789,7 @@ export function ItineraryView({
             onBookingAdded={onBookingAdded}
             addBookingSection={addBookingSection}
             setAddBookingSection={setAddBookingSection}
-            preFill={returnParam ? RETURN_PREFILL.experiences : undefined}
+            preFill={sectionFromReturn === "experiences" ? returnPreFill : undefined}
           />
           <div className="space-y-4">
             {result.experiences.links.map((link) => (

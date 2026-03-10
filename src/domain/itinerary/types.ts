@@ -1,4 +1,4 @@
-import type { RaceWeekend, TicketOption } from "../races/types";
+import type { RaceWeekend, TicketOption, StayOption } from "../races/types";
 
 export type BudgetTier = "$" | "$$" | "$$$";
 
@@ -61,6 +61,10 @@ export type TicketsSection = SectionLinks & {
   options?: TicketOption[];
 };
 
+export type StaysSection = SectionLinks & {
+  options?: StayOption[];
+};
+
 /** A single curated activity (e.g. tour or experience) from a provider. */
 export type ExperienceActivity = {
   title: string;
@@ -78,7 +82,7 @@ export type ItineraryResult = {
   race: RaceWeekend;
   dateOptions: DateOption[];
   flightsByOption: Record<string, SectionLinks>;
-  staysByOption: Record<string, SectionLinks>;
+  staysByOption: Record<string, StaysSection>;
   tickets: TicketsSection;
   experiences: ExperiencesSection;
 };
@@ -100,6 +104,13 @@ export const DEFAULT_SECTION_FILTERS: SectionFilters = {
 /** Booking type for "Add booking" and My Bookings. */
 export const BOOKING_TYPES = ["flight", "stay", "ticket", "activity"] as const;
 export type BookingType = (typeof BOOKING_TYPES)[number];
+
+/** Pre-fill for Add Booking form (e.g. from ?return=stay&confirmation=ABC123). */
+export type AddBookingPreFill = {
+  provider?: string;
+  confirmationRef?: string;
+  detailsUrl?: string;
+};
 
 export type ItineraryBookingRecord = {
   id: string;

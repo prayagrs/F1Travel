@@ -47,11 +47,15 @@ describe("validateBookingInput", () => {
 
   it("returns error when confirmationRef has invalid characters", () => {
     expect(validateBookingInput({ ...valid, confirmationRef: "ABC<script>" })).toBe(
-      "Use only letters, numbers, and hyphens for the confirmation number."
+      "Use only letters, numbers, hyphens, and underscores for the confirmation number."
     );
     expect(validateBookingInput({ ...valid, confirmationRef: "ABC/123" })).toBe(
-      "Use only letters, numbers, and hyphens for the confirmation number."
+      "Use only letters, numbers, hyphens, and underscores for the confirmation number."
     );
+  });
+
+  it("accepts underscores in confirmationRef", () => {
+    expect(validateBookingInput({ ...valid, confirmationRef: "ABC_123" })).toBeNull();
   });
 
   it("returns error when detailsUrl is not a valid URL", () => {

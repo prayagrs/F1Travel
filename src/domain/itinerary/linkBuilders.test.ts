@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   getOriginIata,
   getDestIata,
+  getProviderLabels,
   buildStaysLinks,
   buildExperiencesLinks,
   buildExperiencesSection,
@@ -126,6 +127,17 @@ describe("linkBuilders", () => {
       expect(google.href).toContain("Hotels+in+Monte+Carlo");
       expect(google.href).toContain("checkin=2026-06-02");
       expect(google.href).toContain("checkout=2026-06-12");
+    });
+  });
+
+  describe("getProviderLabels", () => {
+    it("returns section-specific providers plus Other", () => {
+      expect(getProviderLabels("stay")).toContain("Booking.com");
+      expect(getProviderLabels("stay")).toContain("Other");
+      expect(getProviderLabels("flight")).toContain("Google Flights");
+      expect(getProviderLabels("flight")).toContain("Skyscanner");
+      expect(getProviderLabels("ticket")).toContain("Official F1 Tickets");
+      expect(getProviderLabels("activity")).toContain("GetYourGuide");
     });
   });
 

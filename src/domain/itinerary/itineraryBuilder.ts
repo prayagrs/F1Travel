@@ -3,10 +3,9 @@ import type { RaceWeekend } from "../races/types";
 import { generateDateOptions } from "./dateOptions";
 import {
   buildFlightsLinks,
-  buildStaysLinks,
+  buildStaysSection,
   buildTicketsSection,
   buildExperiencesSection,
-  getNeighborhoodTipsByBudget,
   getFlightNotesByBudget,
 } from "./linkBuilders";
 
@@ -35,12 +34,7 @@ export function buildItinerary(
     };
 
     // Stays section
-    const stayLinks = buildStaysLinks(race, dateOption);
-    staysByOption[dateOption.key] = {
-      title: "Accommodation",
-      links: stayLinks,
-      notes: getNeighborhoodTipsByBudget(request.budgetTier),
-    };
+    staysByOption[dateOption.key] = buildStaysSection(race, dateOption, request.budgetTier);
   }
 
   // Build tickets section (constant, not per date option)
